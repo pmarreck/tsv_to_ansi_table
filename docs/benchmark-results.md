@@ -26,3 +26,24 @@ excluded. See [README.md](../README.md#tests-and-benchmarks) for reproduction.
 All eight historical comparisons are **UNBASELINED**, and `./bm` returned 3.
 The measurements are valid observations, with no approved historical epoch yet.
 Raw samples and provenance remain in the configured external history store.
+
+## Glyph configuration update
+
+The same workload was measured again at commit `04ce607`, with the default glyph
+profile. These are new observations of the updated code, not an approved baseline.
+
+| Implementation | Widths | Allowed cores | Wall ms | Child CPU ms |
+| --- | --- | ---: | ---: | ---: |
+| Roc | Auto | 1 | 311.478 | 300.901 |
+| Roc | Auto | 12 | 326.876 | 324.644 |
+| Roc | Fixed | 1 | 193.722 | 191.527 |
+| Roc | Fixed | 12 | 197.642 | 196.129 |
+| Zig | Auto | 1 | 46.084 | 44.992 |
+| Zig | Auto | 12 | 48.791 | 48.174 |
+| Zig | Fixed | 1 | 30.270 | 29.692 |
+| Zig | Fixed | 12 | 33.405 | 32.958 |
+
+The single-core Roc/Zig wall-time ratios were 6.76 for auto widths and 6.40 for
+fixed widths. Roc's auto-width case was slower than the initial observation;
+these two runs on a shared host do not isolate the cause. All outputs remained
+correct, and all eight historical comparisons remained UNBASELINED (exit 3).
