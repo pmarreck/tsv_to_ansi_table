@@ -1,0 +1,15 @@
+# Dirtree: Stateful directory trees in the CLI for humans and LLMs. https://github.com/pmarreck/dirtree
+ver=1.2
+annotate=[
+	.mechatron-prime/targets = Exact-commit native tests and cross-compilation CI targets
+	bm = Compare optimized Roc and Zig with verified identical workloads
+	platform/console.c = Native console width and Windows decimal separator queries
+	profiling.json = Shared benchmark cases and historical cohort identity
+	src/Engine.roc = Pure incremental table state and bounded streaming output
+	src/Options.roc = Validated CLI configuration and positional column options
+	src/Render.roc = Pure table layout and row/border rendering
+	src/Table.roc = Pure TSV parsing, numeric inference, header selection, and width allocation
+	src/Text.roc = Unicode-safe measurement, sanitization, clipping, and alignment
+	test = Complete deterministic unit and real CLI acceptance entry point
+	zig/main.zig = Zig stdin/stdout, locale and terminal adapters
+]

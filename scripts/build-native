@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -u
+cd "$(dirname "$0")/.." || exit 1
+source scripts/host
+out=${1:?output installation tree required}
+mkdir -p "$out/bin" || exit 1
+profile=${TSV_PROFILE:-ReleaseFast}
+roc_source=src/main.roc
+roc_opt=speed
+if [[ $profile == Debug ]]; then
+	work=$(mktemp -d "${TMPDIR:-/tmp}/tsv-debug.XXXXXXXX") || exit 1
+	cp -R src "$work/src" || exit 1
+	printf '%s\n' 'BuildInfo :: [].{ banner = "\u(1b)[33mDEBUG BUILD!\u(1b)[0m\n" }' > "$work/src/BuildInfo.roc"
+	roc_source="$work/src/main.roc"
+	roc_opt=dev
+fi
+scripts/roc-env build "$roc_source" --opt="$roc_opt" --target="$tsv_roc_target" --output="$out/bin/tsv-to-ansi-table-roc" || exit $?
+unset NIX_CFLAGS_COMPILE NIX_LDFLAGS
+zig build -Dutf8proc="$UTF8PROC_SRC" -Doptimize="$profile" -Dtarget="$tsv_target" --prefix "$out" -j4 || exit $?
+ln -s tsv-to-ansi-table-roc "$out/bin/tsv-to-ansi-table" || exit 1

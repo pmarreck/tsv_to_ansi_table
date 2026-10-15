@@ -1,0 +1,9 @@
+/AGENTS.md
+/inbox/
+/.nix-out/
+/.build-work/
+/result
+/result-*
+/bin/linux/
+/bin/macos/
+/bin/windows/

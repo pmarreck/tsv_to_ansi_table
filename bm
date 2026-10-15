@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -u
+cd "$(dirname "$0")" || exit 1
+./build >&2 || exit $?
+source scripts/host
+export TSV_BENCH_BIN="$PWD/bin/$tsv_os/$tsv_arch"
+if [[ -z ${PERFORMANCE_HISTORY_URL:-} ]]; then
+	history="${XDG_STATE_HOME:-$HOME/.local/state}/performance-history"
+	mkdir -p "$history" || exit 1
+	export PERFORMANCE_HISTORY_URL="file://$history"
+fi
+if command -v build-budget >/dev/null; then
+	exec build-budget --project tsv-to-ansi-table -- nix develop -c performance-profile run --config profiling.json --mode bm --seed 15 "$@"
+fi
+exec nix develop -c performance-profile run --config profiling.json --mode bm --seed 15 "$@"

@@ -1,0 +1,24 @@
+tsv-to-ansi-table: render UTF-8 TSV from stdin
+
+Usage: tsv-to-ansi-table [OPTIONS] < input.tsv
+
+  --no-header                 Treat the first input row as data
+  --headers NAME,NAME         Replace the input header (prepend with --no-header)
+  --header NAME               Append one explicit header name; repeatable
+  --widths auto,12,8          Content widths; any auto buffers until EOF
+  --align auto,left,right,center  Positional column alignment
+  --overflow MODE,MODE        auto, truncate-left, truncate-right (truncate),
+                             prefix-ellipsis, or suffix-ellipsis
+  --terminal-width N          Total output width (otherwise TTY, COLUMNS, or 80)
+  --decimal-separator CHAR    Override locale decimal point: . , or ٫
+  --color auto|always|never   Auto uses color on a TTY unless NO_COLOR is set
+  --ascii                    ASCII borders and ellipsis
+  --plain                    Borderless, colorless aligned output
+  -h, --help                 Show help
+  --about                    Show version and compiled platform
+
+Numbers are inferred from the first data row and right-aligned by default.
+Text and numeric digits are preserved; long cells are clipped without splitting
+graphemes. Paths keep their tail by default. Ragged rows and invalid UTF-8 fail.
+All fixed widths stream after header/first-data-row inference; late errors can
+follow already-written rows. Redirected output keeps Unicode, without color.

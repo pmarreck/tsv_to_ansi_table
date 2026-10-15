@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -u
+source scripts/host
+product=${1:?product required}
+selected=$(readlink -f "$product") || exit 1
+for name in tsv-to-ansi-table-roc tsv-to-ansi-table-zig; do
+	executable="$selected/bin/$name"
+	header=$(file -b "$executable") || exit 1
+	case "$tsv_os/$tsv_arch:$header" in
+		linux/x86_64:*ELF*64-bit*x86-64*statically*) ;;
+		linux/aarch64:*ELF*64-bit*ARM*aarch64*statically*) ;;
+		macos/aarch64:*Mach-O*arm64*) ;;
+		*) printf 'Build artifact does not match host: %s\n' "$header" >&2; exit 1 ;;
+	esac
+	"$executable" --about || exit 1
+done
+[[ -x $selected/bin/tsv-to-ansi-table ]] || exit 1
+mkdir -p "bin/$tsv_os/$tsv_arch" || exit 1
+lock=".build-work/publish.lock"
+mkdir -p .build-work || exit 1
+exec 9>"$lock"
+flock 9 || exit 1
+for name in tsv-to-ansi-table-roc tsv-to-ansi-table-zig tsv-to-ansi-table; do
+	dest="bin/$tsv_os/$tsv_arch/$name"
+	if [[ -e $dest && ! -L $dest ]]; then printf 'Refusing to replace non-symlink %s\n' "$dest" >&2; exit 1; fi
+done
+for name in tsv-to-ansi-table-roc tsv-to-ansi-table-zig tsv-to-ansi-table; do
+	dest="bin/$tsv_os/$tsv_arch/$name"
+	ln -s "$selected/bin/$name" "$dest.new.$$" || exit 1
+	mv -Tf "$dest.new.$$" "$dest" || exit 1
+done

@@ -1,0 +1,3 @@
+BuildInfo :: [].{
+	banner = ""
+}

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -u
+source "$(dirname "$0")/../capture.bash"
+failures=0
+for cli in "$@"; do
+	out= err= rc=
+	capture "$cli" --about
+	if [[ $rc != 0 || $err != $'\e[33mDEBUG BUILD!\e[0m' ]]; then
+		printf 'FAIL debug announcement for %s\n' "$cli"
+		failures=$((failures + 1))
+	fi
+done
+exit "$failures"

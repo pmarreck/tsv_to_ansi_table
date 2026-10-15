@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -u
+cli=${1:?exact executable required}
+source "$(dirname "$0")/../capture.bash"
+failures=0
+assert() { if ! "$@"; then printf 'FAIL semantic assertion: %s\n' "$*"; failures=$((failures + 1)); fi; }
+feed() { printf '%s' "$input" | "$cli" "$@"; }
+run_case() { out= err= rc=; capture feed "$@"; assert test "$rc" = 0; assert test -z "$err"; }
+input=$'OLD\tN\r\na\t-12.300\r\nb\t3.1415926'
+run_case --headers Name,Number --color never
+assert test "${out/OLD/}" = "$out"
+assert test "${out/3.1415926/}" != "$out"
+assert test "${out/-12.300/}" != "$out"
+assert test "${out/Name/}" != "$out"
+input=$'first\t12\nnext\t3\n'
+run_case --no-header --headers Name,N --color never
+assert test "${out/first/}" != "$out"
+assert test "${out/Name/}" != "$out"
+input=$'a\tb\tc\n1\t\t\n'
+run_case --color never
+input=$'x\n\e[31m\a\xe2\x80\xaey\n'
+run_case --color never
+assert test "${out/$'\e'/}" = "$out"
+assert test "${out/$'\a'/}" = "$out"
+assert test "${out/$'\xe2\x80\xae'/}" = "$out"
+input=$'N\n12,300\n3,1415926\n'
+run_case --decimal-separator , --color always
+assert test "${out/3,1415926/}" != "$out"
+assert test "${out/$'\e[1;36m'/}" != "$out"
+input=''
+run_case --headers Name,N --color never
+assert test "${out/Name/}" != "$out"
+if [[ $failures == 0 ]]; then printf 'PASS header, precision, CRLF, trailing-field and control semantics\n'; fi
+exit "$failures"

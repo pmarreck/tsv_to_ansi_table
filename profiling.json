@@ -1,0 +1,188 @@
+{
+  "schema": "performance-project/v1",
+  "project": "tsv_to_ansi_table",
+  "history_url": "file:///var/lib/performance-profiling",
+  "cases": [
+    {
+      "definition": "tsv-cli-v1",
+      "metric": "wall_ns",
+      "comparison": "absolute",
+      "command": [
+        "luajit",
+        "tests/benchmark/measure.lua",
+        "{case}",
+        "{sizes}",
+        "{seed}"
+      ],
+      "mode": "bm",
+      "bounds": [
+        1,
+        60000000000
+      ],
+      "sizes": [
+        10000
+      ],
+      "name": "roc-auto-1",
+      "cores": 1
+    },
+    {
+      "definition": "tsv-cli-v1",
+      "metric": "wall_ns",
+      "comparison": "absolute",
+      "command": [
+        "luajit",
+        "tests/benchmark/measure.lua",
+        "{case}",
+        "{sizes}",
+        "{seed}"
+      ],
+      "mode": "bm",
+      "bounds": [
+        1,
+        60000000000
+      ],
+      "sizes": [
+        10000
+      ],
+      "name": "roc-auto-12",
+      "cores": 12
+    },
+    {
+      "definition": "tsv-cli-v1",
+      "metric": "wall_ns",
+      "comparison": "absolute",
+      "command": [
+        "luajit",
+        "tests/benchmark/measure.lua",
+        "{case}",
+        "{sizes}",
+        "{seed}"
+      ],
+      "mode": "bm",
+      "bounds": [
+        1,
+        60000000000
+      ],
+      "sizes": [
+        10000
+      ],
+      "name": "roc-fixed-1",
+      "cores": 1
+    },
+    {
+      "definition": "tsv-cli-v1",
+      "metric": "wall_ns",
+      "comparison": "absolute",
+      "command": [
+        "luajit",
+        "tests/benchmark/measure.lua",
+        "{case}",
+        "{sizes}",
+        "{seed}"
+      ],
+      "mode": "bm",
+      "bounds": [
+        1,
+        60000000000
+      ],
+      "sizes": [
+        10000
+      ],
+      "name": "roc-fixed-12",
+      "cores": 12
+    },
+    {
+      "definition": "tsv-cli-v1",
+      "metric": "wall_ns",
+      "comparison": "absolute",
+      "command": [
+        "luajit",
+        "tests/benchmark/measure.lua",
+        "{case}",
+        "{sizes}",
+        "{seed}"
+      ],
+      "mode": "bm",
+      "bounds": [
+        1,
+        60000000000
+      ],
+      "sizes": [
+        10000
+      ],
+      "name": "zig-auto-1",
+      "cores": 1
+    },
+    {
+      "definition": "tsv-cli-v1",
+      "metric": "wall_ns",
+      "comparison": "absolute",
+      "command": [
+        "luajit",
+        "tests/benchmark/measure.lua",
+        "{case}",
+        "{sizes}",
+        "{seed}"
+      ],
+      "mode": "bm",
+      "bounds": [
+        1,
+        60000000000
+      ],
+      "sizes": [
+        10000
+      ],
+      "name": "zig-auto-12",
+      "cores": 12
+    },
+    {
+      "definition": "tsv-cli-v1",
+      "metric": "wall_ns",
+      "comparison": "absolute",
+      "command": [
+        "luajit",
+        "tests/benchmark/measure.lua",
+        "{case}",
+        "{sizes}",
+        "{seed}"
+      ],
+      "mode": "bm",
+      "bounds": [
+        1,
+        60000000000
+      ],
+      "sizes": [
+        10000
+      ],
+      "name": "zig-fixed-1",
+      "cores": 1
+    },
+    {
+      "definition": "tsv-cli-v1",
+      "metric": "wall_ns",
+      "comparison": "absolute",
+      "command": [
+        "luajit",
+        "tests/benchmark/measure.lua",
+        "{case}",
+        "{sizes}",
+        "{seed}"
+      ],
+      "mode": "bm",
+      "bounds": [
+        1,
+        60000000000
+      ],
+      "sizes": [
+        10000
+      ],
+      "name": "zig-fixed-12",
+      "cores": 12
+    }
+  ],
+  "identity": {
+    "build_mode": "ReleaseFast",
+    "concurrency": 1,
+    "runtime": "Roc-2026-10-12-2664a27-and-Zig-0.16.0"
+  }
+}

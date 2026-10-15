@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -u
+cli=${1:?pass exact executable}
+# EOF is withheld until a data row has arrived. The timeout is a deadlock
+# watchdog, not a timing-based expectation or synchronization mechanism.
+coproc TABLE { exec "$cli" --widths 5,5 --color never; }
+producer_pid=$TABLE_PID
+exec {send_fd}>&"${TABLE[1]}"
+exec {read_fd}<&"${TABLE[0]}"
+original_send=${TABLE[1]}
+exec {original_send}>&-
+printf 'Name\tN\na\t12\n' >&"$send_fd"
+seen=0
+while IFS= read -r -t 20 line <&"$read_fd"; do
+	if [[ $line == *'12'* ]]; then seen=1; break; fi
+done
+if [[ $seen == 0 ]]; then
+	printf 'FAIL fixed-width output blocked before EOF\n'
+	kill "$producer_pid" 2>/dev/null
+	exec {send_fd}>&-
+	wait "$producer_pid" 2>/dev/null
+	exit 1
+fi
+printf 'b\t3\n' >&"$send_fd"
+exec {send_fd}>&-
+seen_second=0
+while IFS= read -r -t 20 line <&"$read_fd"; do
+	if [[ $line == *'b'* && $line == *'3'* ]]; then seen_second=1; fi
+done
+wait "$producer_pid"
+rc=$?
+exec {read_fd}<&-
+if [[ $rc != 0 || $seen_second != 1 ]]; then printf 'FAIL continued streaming\n'; exit 1; fi
+printf 'PASS fixed-width producer handshake\n'

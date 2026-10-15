@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Sourced by build/run; selects only the executing host's output directory.
+case "$(uname -s)" in
+	Linux) tsv_os=linux; tsv_abi=musl; tsv_roc_target_prefix=musl ;;
+	Darwin) tsv_os=macos; tsv_abi=none; tsv_roc_target_prefix=mac ;;
+	*) printf 'Unsupported build host\n' >&2; exit 2 ;;
+esac
+case "$(uname -m)" in
+	x86_64|amd64) tsv_arch=x86_64; tsv_roc_arch=x64 ;;
+	aarch64|arm64) tsv_arch=aarch64; tsv_roc_arch=arm64 ;;
+	*) printf 'Unsupported architecture\n' >&2; exit 2 ;;
+esac
+if [[ $tsv_os == macos && $tsv_arch != aarch64 ]]; then
+	printf 'Only Apple Silicon macOS builds are supported\n' >&2; exit 2
+fi
+tsv_target="$tsv_arch-$tsv_os"
+[[ $tsv_os != linux ]] || tsv_target="$tsv_target-musl"
+tsv_roc_target="$tsv_roc_arch$tsv_roc_target_prefix"

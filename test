@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -u
+cd "$(dirname "$0")" || exit 1
+if [[ ${TSV_ROC_ENV:-} != 1 ]]; then
+	if command -v build-budget >/dev/null; then
+		exec build-budget --project tsv-to-ansi-table -- nix develop -c ./test "$@"
+	fi
+	exec nix develop -c ./test "$@"
+fi
+failures=0
+scripts/roc-env test src/main.roc --no-cache || failures=$((failures + 1))
+scripts/roc-env check src/main.roc || failures=$((failures + 1))
+unset NIX_CFLAGS_COMPILE NIX_LDFLAGS
+zig build test -Dutf8proc="$UTF8PROC_SRC" -j4 || failures=$((failures + 1))
+luajit tests/benchmark/test-oracle.lua || failures=$((failures + 1))
+if [[ -n ${TSV_TEST_BIN:-} ]]; then
+	products=$TSV_TEST_BIN
+else
+	source scripts/host
+	products="$PWD/.build-work/$tsv_target/ReleaseFast/test/bin"
+	# Use a new product directory so failed builds cannot test a stale executable.
+	work=$(mktemp -d "${TMPDIR:-/tmp}/tsv-tests.XXXXXXXX") || exit 1
+	if ! scripts/build-native "$work"; then exit 1; fi
+	products="$work/bin"
+fi
+for implementation in roc zig; do
+	for suite in tests/cli/check tests/cli/errors tests/cli/streaming tests/cli/semantics; do
+		bash "$suite" "$products/tsv-to-ansi-table-$implementation" || failures=$((failures + 1))
+	done
+done
+bash tests/cli/parity "$products/tsv-to-ansi-table-roc" "$products/tsv-to-ansi-table-zig" || failures=$((failures + 1))
+bash tests/benchmark/adapter "$products" || failures=$((failures + 1))
+debug_work=$(mktemp -d "${TMPDIR:-/tmp}/tsv-debug-test.XXXXXXXX") || exit 1
+if TSV_PROFILE=Debug scripts/build-native "$debug_work"; then
+	bash tests/cli/debug "$debug_work/bin/tsv-to-ansi-table-roc" "$debug_work/bin/tsv-to-ansi-table-zig" || failures=$((failures + 1))
+else
+	failures=$((failures + 1))
+fi
+if [[ $failures != 0 ]]; then printf '%s suite(s) failed\n' "$failures" >&2; exit 1; fi
+printf 'All required suites passed.\n'

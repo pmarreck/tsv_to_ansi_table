@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -u
+cd "$(dirname "$0")" || exit 1
+source scripts/host
+profile=ReleaseFast
+attribute=default
+case "${1:-}" in
+	'') ;;
+	--debug) profile=Debug; attribute=debug; shift ;;
+	--test) ./test || exit $?; shift ;;
+	*) printf 'Usage: ./build [--debug|--test]\n' >&2; exit 2 ;;
+esac
+[[ $# == 0 ]] || exit 2
+product=".nix-out/$tsv_target/$profile"
+mkdir -p "$(dirname "$product")" || exit 1
+nix build ".#$attribute" --out-link "$product" || exit $?
+# Publication is serialized and uses atomic link replacement. The GC root above
+# retains the complete immutable product; failed builds never touch bin/.
+exec nix develop -c scripts/publish "$product"

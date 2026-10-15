@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -u
+roc=${1:?Roc executable required}
+zig=${2:?Zig executable required}
+source "$(dirname "$0")/../capture.bash"
+input=$'Name\tValue\tPath\n界面\t-12.340\t/home/example/very-long-report.tsv\nCafé\t3.1415926\t./short.tsv\n👩‍💻\t8\toutput.txt\n🇺🇸\t+5.\tC:\\long\\file.txt\n'
+failures=0
+cases=0
+feed() { printf '%s' "$input" | "$@"; }
+for widths in 'auto,auto,auto' '5,12,9' '5,auto,9'; do
+	for align in auto left right center; do
+		for overflow in auto truncate-left truncate-right truncate prefix-ellipsis suffix-ellipsis; do
+			for style in unicode ascii plain; do
+				args=(--widths "$widths" --align "$align,$align,$align" --overflow "$overflow,$overflow,$overflow" --terminal-width 45 --color never)
+				[[ $style != ascii ]] || args+=(--ascii)
+				[[ $style != plain ]] || args+=(--plain)
+				out= err= rc=
+				capture feed "$roc" "${args[@]}"
+				expected=$out expected_err=$err expected_rc=$rc
+				capture feed "$zig" "${args[@]}"
+				if [[ $rc != 0 || $expected_rc != 0 || $out != "$expected" || -n $err || -n $expected_err ]]; then
+					printf 'FAIL parity %s %s %s %s\n' "$widths" "$align" "$overflow" "$style"
+					failures=$((failures + 1))
+				fi
+				cases=$((cases + 1))
+			done
+		done
+	done
+done
+if [[ $failures == 0 ]]; then printf 'PASS %s cross-implementation option combinations\n' "$cases"; fi
+exit "$failures"

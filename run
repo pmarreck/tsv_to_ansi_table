@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -u
+cd "$(dirname "$0")" || exit 1
+source scripts/host
+./build >&2 || exit $?
+exec "bin/$tsv_os/$tsv_arch/tsv-to-ansi-table" "$@"

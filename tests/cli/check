@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -u
+cli=${1:?pass exact executable}
+source "$(dirname "$0")/../capture.bash"
+failures=0
+check() {
+	local label=$1 input=$2 expected=$3
+	shift 3
+	local out err rc
+	# Preserve final newlines through Bash command substitution in capture.
+	feed() { printf '%s' "$input" | "$cli" "$@"; local status=$?; printf '\034'; return "$status"; }
+	capture feed "$@"
+	out=${out%$'\034'}
+	if [[ $rc == 0 && $out == "$expected" && -z $err ]]; then
+		printf 'PASS %s\n' "$label"
+	else
+		printf 'FAIL %s (exit %s)\nexpected: %q\nactual: %q\nstderr: %q\n' "$label" "$rc" "$expected" "$out" "$err"
+		failures=$((failures + 1))
+	fi
+}
+check 'empty input' '' '' --color never
+# Plain text asserts the data/alignment contract without freezing decorations.
+headers=$'Name  Count\na        12\nb         3\n'
+check 'default headers and numeric alignment' $'Name\tCount\na\t12\nb\t3\n' "$headers" --plain
+check 'no header retains first row' $'a\t12\nb\t3\n' $'a  12\nb   3\n' --no-header --plain
+check 'manual headers replace input header' $'OLD\tN\na\t12\nb\t3\n' "$headers" --headers Name,Count --plain
+check 'manual headers prepend without consuming data' $'a\t12\nb\t3\n' "$headers" --no-header --headers Name,Count --plain
+out='' err='' rc=''
+capture "$cli" --about
+if [[ $rc != 0 || $out != *tsv-to-ansi-table* || -n $err ]]; then
+	printf 'FAIL about\n'; failures=$((failures + 1))
+fi
+capture "$cli" --help
+if [[ $rc != 0 || $out != *--no-header* || $out != *--widths* || -n $err ]]; then
+	printf 'FAIL help\n'; failures=$((failures + 1))
+fi
+exit "$failures"
