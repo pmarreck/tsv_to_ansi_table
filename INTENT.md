@@ -46,6 +46,9 @@ No spreadsheet evaluation, arbitrary terminal escape execution, or interactive
 editor is needed. Keep this a focused TSV renderer. These requirements define
 intended behavior; tests and the documented target matrix record verification.
 
+Commit and push validated work and verify CI. Create release tags and GitHub
+releases only when explicitly requested.
+
 ## Additional implementation
 
 Provide a Zig 0.16.0 implementation after establishing the Bash stdin/output
