@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -u
+cli=${1:?exact executable required}
+source tests/capture.bash
+failures=0
+out='' err='' rc=''
+feed() { printf 'N\nabcdef\n' | env TSV_TO_ANSI_TABLE_GLYPHS="$glyphs" "$cli" --color never --widths 4 "$@"; }
+check_ok() {
+	capture feed "$@"
+	if [[ $rc != 0 || -n $err ]]; then printf 'FAIL glyph configuration: %q\n' "$err"; failures=$((failures + 1)); fi
+}
+custom='{"top_left":"A","top_join":"B","top_right":"C","middle_left":"D","middle_join":"E","middle_right":"F","bottom_left":"G","bottom_join":"H","bottom_right":"I","horizontal":"-","vertical":"!","ellipsis":"~"}'
+glyphs=$custom
+check_ok
+if [[ $out != *'A------C'* || $out != *'D------F'* || $out != *'G------I'* || $out != *'! abc~ !'* ]]; then printf 'FAIL configured border/ellipsis glyphs\n'; failures=$((failures + 1)); fi
+join_feed() { printf 'N\tM\nabcdef\tuvwxyz\n' | env TSV_TO_ANSI_TABLE_GLYPHS="$custom" "$cli" --color never --widths 4,4; }
+capture join_feed
+if [[ $rc != 0 || -n $err || $out != *'A------B------C'* || $out != *'D------E------F'* || $out != *'G------H------I'* ]]; then printf 'FAIL configured join glyphs\n'; failures=$((failures + 1)); fi
+check_ok --ascii
+if [[ $out != *'+------+'* || $out != *'| a... |'* || $out == *'abc~'* ]]; then printf 'FAIL explicit ASCII precedence\n'; failures=$((failures + 1)); fi
+check_ok --plain --no-header
+if [[ $out != $'N   \nabc~' ]]; then printf 'FAIL plain custom ellipsis\n'; failures=$((failures + 1)); fi
+glyphs='{"top_left":"╭","top_right":"╮"}'
+check_ok
+if [[ $out != '╭──────╮'* || $out != *'└──────┘'* ]]; then printf 'FAIL partial glyph overrides\n'; failures=$((failures + 1)); fi
+glyphs='{"ellipsis":"e\u0301"}'
+check_ok --plain
+if [[ $out != *'abcé'* ]]; then printf 'FAIL grapheme ellipsis\n'; failures=$((failures + 1)); fi
+# Classify the complete invalid set, including untrusted terminal controls.
+for glyphs in 'bad json' 'null' '[]' '{"unknown":"x"}' '{"vertical":1}' '{"vertical":""}' '{"vertical":"||"}' '{"vertical":"界"}' '{"vertical":"\u001b"}' '{"vertical":"\u202e"}' '{"ellipsis":"👩‍💻"}' $'\xff'; do
+	capture feed
+	if [[ $rc == 0 || $err != tsv-to-ansi-table:* ]]; then printf 'FAIL invalid glyph object: %s\n' "$glyphs"; failures=$((failures + 1)); fi
+done
+if [[ $failures == 0 ]]; then printf 'PASS glyph overrides, precedence and invalid-value set\n'; fi
+exit "$failures"

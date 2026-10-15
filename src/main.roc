@@ -8,6 +8,7 @@ import Options
 import Render
 import Engine
 import BuildInfo
+import Glyphs
 import pf.Console
 import pf.Env
 import pf.Cmd
@@ -61,7 +62,13 @@ run! = |args| {
 			Err(_) => "."
 		}
 	}
-	config = Options.parse(args, { ..Options.defaults, terminal: width, decimal })?
+	raw_glyphs = match Env.var_str!("TSV_TO_ANSI_TABLE_GLYPHS") {
+		Ok(value) => value
+		Err(VarNotFound(_)) => ""
+		Err(_) => return Err(Invalid("Cannot read TSV_TO_ANSI_TABLE_GLYPHS as UTF-8"))
+	}
+	glyphs = Glyphs.parse(raw_glyphs)?
+	config = Options.parse(args, { ..Options.defaults, terminal: width, decimal, glyphs })?
 	color = if config.color == "auto" {
 		if columns > 0 and Env.var_str!("NO_COLOR").is_err() and (Env.var_str!("TERM") ?? "") != "dumb" "always" else "never"
 	} else config.color
@@ -83,4 +90,4 @@ run! = |args| {
 }
 
 
-help = "tsv-to-ansi-table: render UTF-8 TSV from stdin\n\nUsage: tsv-to-ansi-table [OPTIONS] < input.tsv\n\n  --no-header                 Treat the first input row as data\n  --headers NAME,NAME         Replace the input header (prepend with --no-header)\n  --header NAME               Append one explicit header name; repeatable\n  --widths auto,12,8          Content widths; any auto buffers until EOF\n  --align auto,left,right,center  Positional column alignment\n  --overflow MODE,MODE        auto, truncate-left, truncate-right (truncate),\n                             prefix-ellipsis, or suffix-ellipsis\n  --terminal-width N          Total output width (otherwise TTY, COLUMNS, or 80)\n  --decimal-separator CHAR    Override locale decimal point: . , or ٫\n  --color auto|always|never   Auto uses color on a TTY unless NO_COLOR is set\n  --ascii                    ASCII borders and ellipsis\n  --plain                    Borderless, colorless aligned output\n  -h, --help                 Show help\n  --about                    Show version and compiled platform\n\nNumbers are inferred from the first data row and right-aligned by default.\nText and numeric digits are preserved; long cells are clipped without splitting\ngraphemes. Paths keep their tail by default. Ragged rows and invalid UTF-8 fail.\nAll fixed widths stream after header/first-data-row inference; late errors can\nfollow already-written rows. Redirected output keeps Unicode, without color.\n"
+help = "tsv-to-ansi-table: render UTF-8 TSV from stdin\n\nUsage: tsv-to-ansi-table [OPTIONS] < input.tsv\n\n  --no-header                 Treat the first input row as data\n  --headers NAME,NAME         Replace the input header (prepend with --no-header)\n  --header NAME               Append one explicit header name; repeatable\n  --widths auto,12,8          Content widths; any auto buffers until EOF\n  --align auto,left,right,center  Positional column alignment\n  --overflow MODE,MODE        auto, truncate-left, truncate-right (truncate),\n                             prefix-ellipsis, or suffix-ellipsis\n  --terminal-width N          Total output width (otherwise TTY, COLUMNS, or 80)\n  --decimal-separator CHAR    Override locale decimal point: . , or ٫\n  --color auto|always|never   Auto uses color on a TTY unless NO_COLOR is set\n  --ascii                    ASCII borders and ellipsis\n  --plain                    Borderless, colorless aligned output\n  -h, --help                 Show help\n  --about                    Show version and compiled platform\n\nTSV_TO_ANSI_TABLE_GLYPHS accepts JSON overrides for border/ellipsis glyphs.\nExample: {\"top_left\":\"╭\",\"top_right\":\"╮\",\"ellipsis\":\"~\"}\nEach override must be one safe one-cell grapheme; omitted names keep defaults.\n--ascii overrides the custom profile; --plain still uses its ellipsis.\n\nNumbers are inferred from the first data row and right-aligned by default.\nText and numeric digits are preserved; long cells are clipped without splitting\ngraphemes. Paths keep their tail by default. Ragged rows and invalid UTF-8 fail.\nAll fixed widths stream after header/first-data-row inference; late errors can\nfollow already-written rows. Redirected output keeps Unicode, without color.\n"

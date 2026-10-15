@@ -1,7 +1,9 @@
+import Glyphs
+
 Options :: [].{
-	Config : { no_header : Bool, headers : List(Str), widths : List(U64), align : List(Str), overflow : List(Str), terminal : U64, color : Str, ascii : Bool, plain : Bool, decimal : Str, help : Bool, about : Bool }
+	Config : { no_header : Bool, headers : List(Str), widths : List(U64), align : List(Str), overflow : List(Str), terminal : U64, color : Str, ascii : Bool, plain : Bool, decimal : Str, help : Bool, about : Bool, glyphs : Glyphs.Set }
 	defaults : Config
-	defaults = { no_header: False, headers: [], widths: [], align: [], overflow: [], terminal: 80, color: "auto", ascii: False, plain: False, decimal: ".", help: False, about: False }
+	defaults = { no_header: False, headers: [], widths: [], align: [], overflow: [], terminal: 80, color: "auto", ascii: False, plain: False, decimal: ".", help: False, about: False, glyphs: Glyphs.defaults }
 	parse : List(Str), Config -> Try(Config, [Invalid(Str)])
 	parse = |args, initial| {
 		var $c = initial

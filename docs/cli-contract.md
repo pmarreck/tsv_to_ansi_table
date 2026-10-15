@@ -38,3 +38,15 @@ one cell. Original numeric text and precision are preserved.
 - Clipping: never split a grapheme or exceed a content width with its marker.
 - Streaming: observe output before sending EOF, including the first data row.
 - Errors: a late streaming error may follow already-emitted valid rows.
+
+## Configurable glyphs
+
+`TSV_TO_ANSI_TABLE_GLYPHS` is a JSON object of named border/ellipsis overrides.
+Missing keys keep defaults; an empty or unset variable selects the default
+profile. Each override must be one grapheme occupying exactly one display cell,
+and must survive the existing text sanitizer unchanged. Reject unknown keys,
+non-string values, malformed JSON and invalid UTF-8. This preserves width
+allocation and prevents configuration from injecting terminal controls.
+`--ascii` selects the existing ASCII preset; `--plain` omits borders while
+retaining the configured ellipsis. Help and about remain available even when
+configuration is invalid.

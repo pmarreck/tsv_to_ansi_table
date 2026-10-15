@@ -14,6 +14,7 @@ and pipelines, with Nix-pinned dependencies and an MIT-licensed public repositor
 - Support per-column widths and alignment. Fit the complete table, including borders, separators and padding, within the available terminal width. Fairly cap oversized auto columns so one long value does not starve the others; apply normal overflow behavior to capped columns.
 - Support `truncate-left`, `truncate-right` (alias `truncate`), `prefix-ellipsis`, and `suffix-ellipsis`. Default to suffix ellipsis, except path-looking cells default to prefix ellipsis to preserve the tail. Explicit overflow configuration wins. Use Unicode `…` in normal output.
 - Follow established CLI conventions: clear help/about, UTF-8, useful errors on stderr, ANSI/color controls, plain/ASCII alternatives and documented redirected-output behavior.
+- Allow named border and ellipsis glyph overrides through an environment variable while preserving display-width and terminal-control safety guarantees.
 - Provide `./build` for an optimized current-platform build, `./test` for the complete suite, and `./run` to build and run. Publish the executable under the project's platform-specific `bin/<os>/<arch>/` directory; generic `bin/` is reserved for portable scripts.
 
 ## Design and verification

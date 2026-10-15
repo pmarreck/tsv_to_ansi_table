@@ -2,6 +2,7 @@ const std = @import("std");
 const core = @import("core.zig");
 const text = @import("text.zig");
 const options = @import("options.zig");
+const glyphs = @import("glyphs.zig");
 const A = std.mem.Allocator;
 pub const Row = []const []const u8;
 pub const Layout = struct { config: options.Config, widths: []usize, alignments: []text.Align };
@@ -35,17 +36,18 @@ pub fn streaming(config: options.Config, n: usize) bool {
 	return true;
 }
 pub fn row(a: A, layout: Layout, cells: Row, header: bool) ![]const u8 {
+	const g = if (layout.config.ascii) glyphs.ascii else layout.config.glyphs;
 	if (cells.len != layout.widths.len) return error.RaggedRow;
 	var out: std.ArrayList(u8) = .empty;
 	errdefer out.deinit(a);
 	const color = header and layout.config.color == .always and !layout.config.plain;
 	if (color) try out.appendSlice(a, "\x1b[1;36m");
-	const separator = if (layout.config.plain) "  " else if (layout.config.ascii) "|" else "│";
+	const separator = if (layout.config.plain) "  " else g.vertical;
 	if (!layout.config.plain) try out.appendSlice(a, separator);
 	for (cells, 0..) |cell, i| {
 		const clean = try text.safe(a, cell);
 		defer a.free(clean);
-		const clipped = try text.clip(a, clean, layout.widths[i], if (i < layout.config.overflow.len) layout.config.overflow[i] else .auto, layout.config.ascii);
+		const clipped = try text.clipWith(a, clean, layout.widths[i], if (i < layout.config.overflow.len) layout.config.overflow[i] else .auto, g.ellipsis);
 		defer a.free(clipped);
 		const padded = try text.pad(a, clipped, layout.widths[i], layout.alignments[i]);
 		defer a.free(padded);
@@ -62,12 +64,13 @@ pub fn border(a: A, layout: Layout, kind: enum { top, middle, bottom }) ![]const
 	var out: std.ArrayList(u8) = .empty;
 	errdefer out.deinit(a);
 	if (layout.config.plain or layout.widths.len == 0) return out.toOwnedSlice(a);
-	const marks: [3][]const u8 = if (layout.config.ascii) .{"+", "+", "+"} else switch (kind) {
-		.top => .{"┌", "┬", "┐"}, .middle => .{"├", "┼", "┤"}, .bottom => .{"└", "┴", "┘"},
+	const g = if (layout.config.ascii) glyphs.ascii else layout.config.glyphs;
+	const marks: [3][]const u8 = switch (kind) {
+		.top => .{g.top_left, g.top_join, g.top_right}, .middle => .{g.middle_left, g.middle_join, g.middle_right}, .bottom => .{g.bottom_left, g.bottom_join, g.bottom_right},
 	};
 	try out.appendSlice(a, marks[0]);
 	for (layout.widths, 0..) |w, i| {
-		for (0..w + 2) |_| try out.appendSlice(a, if (layout.config.ascii) "-" else "─");
+		for (0..w + 2) |_| try out.appendSlice(a, g.horizontal);
 		try out.appendSlice(a, if (i + 1 == layout.widths.len) marks[2] else marks[1]);
 	}
 	try out.append(a, '\n');

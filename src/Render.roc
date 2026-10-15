@@ -1,6 +1,7 @@
 import Text
 import Options
 import Table
+import Glyphs
 
 Render :: [].{
 	Layout : { widths : List(U64), align : List(Str), overflow : List(Str), config : Options.Config }
@@ -35,27 +36,29 @@ Render :: [].{
 	}
 	streaming = |config, count| config.widths.len() == count and config.widths.all(|w| w > 0)
 	row = |layout, cells, header| {
+		glyphs = if layout.config.ascii Glyphs.ascii else layout.config.glyphs
 		var $out = []
 		for i in 0..<layout.widths.len() {
 			w = layout.widths.get(i) ?? 1
 			value = Text.safe(cells.get(i) ?? "")
-			clipped = Text.clip(value, w, layout.overflow.get(i) ?? "auto", layout.config.ascii)
+			clipped = Text.clip_with(value, w, layout.overflow.get(i) ?? "auto", glyphs.ellipsis)
 			padded = Text.pad(clipped, w, layout.align.get(i) ?? "left")
 			$out = $out.append(if layout.config.plain padded else " ${padded} ")
 		}
-		separator = if layout.config.plain "  " else if layout.config.ascii "|" else "│"
+		separator = if layout.config.plain "  " else glyphs.vertical
 		body = $out |> Str.join_with(separator)
 		line = if layout.config.plain body else "${separator}${body}${separator}"
 		if header and layout.config.color == "always" and !layout.config.plain "\u(1b)[1;36m${line}\u(1b)[0m\n" else "${line}\n"
 	}
 	border = |layout, kind| {
 		if layout.config.plain or layout.widths == [] { return "" }
-		(left, middle, right) = if layout.config.ascii ("+", "+", "+") else match kind {
-			"top" => ("┌", "┬", "┐")
-			"bottom" => ("└", "┴", "┘")
-			_ => ("├", "┼", "┤")
+		glyphs = if layout.config.ascii Glyphs.ascii else layout.config.glyphs
+		(left, middle, right) = match kind {
+			"top" => (glyphs.top_left, glyphs.top_join, glyphs.top_right)
+			"bottom" => (glyphs.bottom_left, glyphs.bottom_join, glyphs.bottom_right)
+			_ => (glyphs.middle_left, glyphs.middle_join, glyphs.middle_right)
 		}
-		horizontal = if layout.config.ascii "-" else "─"
+		horizontal = glyphs.horizontal
 		body = layout.widths.map(|w| Text.repeat(horizontal, w + 2)) |> Str.join_with(middle)
 		"${left}${body}${right}\n"
 	}

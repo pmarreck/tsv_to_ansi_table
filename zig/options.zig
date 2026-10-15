@@ -2,6 +2,7 @@ const std = @import("std");
 const text = @import("text.zig");
 const A = std.mem.Allocator;
 pub const Config = struct {
+	glyphs: @import("glyphs.zig").Set = .{},
 	no_header: bool = false,
 	headers: []const []const u8 = &.{},
 	widths: []const usize = &.{},

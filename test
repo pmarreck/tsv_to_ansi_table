@@ -8,6 +8,7 @@ if [[ ${TSV_ROC_ENV:-} != 1 ]]; then
 	exec nix develop -c ./test "$@"
 fi
 failures=0
+unset TSV_TO_ANSI_TABLE_GLYPHS
 scripts/roc-env test src/main.roc --no-cache || failures=$((failures + 1))
 scripts/roc-env check src/main.roc || failures=$((failures + 1))
 unset NIX_CFLAGS_COMPILE NIX_LDFLAGS
@@ -24,7 +25,7 @@ else
 	products="$work/bin"
 fi
 for implementation in roc zig; do
-	for suite in tests/cli/check tests/cli/errors tests/cli/streaming tests/cli/semantics; do
+	for suite in tests/cli/check tests/cli/errors tests/cli/streaming tests/cli/semantics tests/cli/glyphs; do
 		bash "$suite" "$products/tsv-to-ansi-table-$implementation" || failures=$((failures + 1))
 	done
 done

@@ -86,10 +86,14 @@ test "controls are inert and orphan marks have a visible base" {
 pub const Overflow = enum { auto, truncate_left, truncate_right, prefix_ellipsis, suffix_ellipsis };
 pub const Align = enum { auto, left, right, center };
 pub fn clip(a: A, text: []const u8, size: usize, mode: Overflow, ascii: bool) ![]const u8 {
+	return clipWith(a, text, size, mode, if (ascii) "..." else "…");
+}
+// Custom glyphs are validated one-cell graphemes; the ASCII preset uses "...".
+pub fn clipWith(a: A, text: []const u8, size: usize, mode: Overflow, glyph: []const u8) ![]const u8 {
 	if (try width(a, text) <= size) return a.dupe(u8, text);
 	const actual = if (mode == .auto) (if (std.mem.indexOfAny(u8, text, "/\\") != null) Overflow.prefix_ellipsis else Overflow.suffix_ellipsis) else mode;
 	const ellipsis = actual == .prefix_ellipsis or actual == .suffix_ellipsis;
-	const marker = if (!ellipsis or size == 0) "" else if (ascii) "..."[0..@min(size, 3)] else "…";
+	const marker = if (!ellipsis or size == 0) "" else if (std.mem.eql(u8, glyph, "...")) glyph[0..@min(size, 3)] else glyph;
 	const budget = size - try width(a, marker);
 	const parts = try clusters(a, text);
 	defer a.free(parts);

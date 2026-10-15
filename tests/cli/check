@@ -31,7 +31,7 @@ if [[ $rc != 0 || $out != *tsv-to-ansi-table* || -n $err ]]; then
 	printf 'FAIL about\n'; failures=$((failures + 1))
 fi
 capture "$cli" --help
-if [[ $rc != 0 || $out != *--no-header* || $out != *--widths* || -n $err ]]; then
+if [[ $rc != 0 || $out != "$(cat src/help.txt)" || -n $err ]]; then
 	printf 'FAIL help\n'; failures=$((failures + 1))
 fi
 exit "$failures"

@@ -25,6 +25,7 @@ pub fn main(init: std.process.Init) void {
 	run(init) catch |err| {
 		const message = switch (err) {
 			error.InvalidOptions => "Invalid option or value; use --help",
+			error.InvalidGlyphs => "TSV_TO_ANSI_TABLE_GLYPHS must be a JSON object of known glyph names with safe one-cell graphemes",
 			error.InvalidUtf8 => "Input and arguments must be UTF-8",
 			error.RaggedRow => "Ragged row: every row must have the same number of fields",
 			error.HeaderCount => "Manual header count does not match input",
@@ -50,6 +51,7 @@ fn run(init: std.process.Init) !void {
 	const env_width = std.fmt.parseInt(usize, env("COLUMNS"), 10) catch 0;
 	const width = if (env_width > 0 and env_width <= 10000) env_width else if (columns > 0) columns else 80;
 	var config = try options.parse(a, args, .{ .terminal = width, .decimal = localeDecimal() });
+	config.glyphs = try @import("glyphs.zig").parse(a, env("TSV_TO_ANSI_TABLE_GLYPHS"));
 	if (config.color == .auto) config.color = if (columns > 0 and c.getenv("NO_COLOR") == null and !std.mem.eql(u8, env("TERM"), "dumb")) .always else .never;
 	var scratch = std.heap.ArenaAllocator.init(init.gpa);
 	defer scratch.deinit();

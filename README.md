@@ -84,6 +84,24 @@ uses the native locale API. Decimal precision is metadata, not a rounding rule.
 
 ## Text safety and display limits
 
+Set `TSV_TO_ANSI_TABLE_GLYPHS` to a JSON object to override individual borders
+and the overflow ellipsis in either implementation:
+
+```bash
+export TSV_TO_ANSI_TABLE_GLYPHS='{"top_left":"╭","top_right":"╮","bottom_left":"╰","bottom_right":"╯","ellipsis":"~"}'
+printf 'Name\tCount\na\t12\n' | ./run
+```
+
+The supported names are `top_left`, `top_join`, `top_right`, `middle_left`,
+`middle_join`, `middle_right`, `bottom_left`, `bottom_join`, `bottom_right`,
+`horizontal`, `vertical`, and `ellipsis`. Omitted names retain their defaults;
+an unset or empty variable uses the default profile. Each value must be a safe
+single grapheme occupying exactly one display cell. Unknown names, malformed
+JSON, controls, empty strings, and wide glyphs fail with a diagnostic.
+`--ascii` selects the ASCII preset instead of the custom profile; `--plain`
+omits borders but uses the configured ellipsis. Text-safety markers remain part
+of the sanitization policy.
+
 Both implementations use Unicode 17 data. Clipping preserves grapheme clusters;
 wide characters and emoji occupy two cells, ambiguous-width characters one.
 Combining-only clusters receive a visible dotted circle. Terminal control and

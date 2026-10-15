@@ -17,12 +17,15 @@ Text :: [].{
 		"${repeat(" ", left)}${text}${repeat(" ", gap - left)}"
 	}
 	clip = |text, size, policy, ascii| {
+		clip_with(text, size, policy, if ascii "..." else "…")
+	}
+	clip_with = |text, size, policy, glyph| {
 		if width(text) <= size { return text }
 		mode = if policy == "auto" {
 			if text.contains("/") or text.contains("\\") "prefix-ellipsis" else "suffix-ellipsis"
 		} else policy
 		ellipsis = mode == "prefix-ellipsis" or mode == "suffix-ellipsis"
-		marker = if !ellipsis "" else if ascii repeat(".", if size < 3 size else 3) else if size == 0 "" else "…"
+		marker = if !ellipsis "" else clusters(glyph).take_first(size) |> Str.join_with("")
 		budget = size - width(marker)
 		parts = clusters(text)
 		from_end = mode == "prefix-ellipsis" or mode == "truncate-left"
