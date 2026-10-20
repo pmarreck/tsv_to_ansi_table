@@ -1,9 +1,10 @@
 import Glyphs
+import Example
 
 Options :: [].{
-	Config : { no_header : Bool, headers : List(Str), widths : List(U64), align : List(Str), overflow : List(Str), terminal : U64, color : Str, ascii : Bool, plain : Bool, decimal : Str, help : Bool, about : Bool, glyphs : Glyphs.Set }
+	Config : { no_header : Bool, headers : List(Str), widths : List(U64), align : List(Str), overflow : List(Str), terminal : U64, color : Str, ascii : Bool, plain : Bool, decimal : Str, help : Bool, about : Bool, glyphs : Glyphs.Set, example : Bool, seed : List(Str) }
 	defaults : Config
-	defaults = { no_header: False, headers: [], widths: [], align: [], overflow: [], terminal: 80, color: "auto", ascii: False, plain: False, decimal: ".", help: False, about: False, glyphs: Glyphs.defaults }
+	defaults = { no_header: False, headers: [], widths: [], align: [], overflow: [], terminal: 80, color: "auto", ascii: False, plain: False, decimal: ".", help: False, about: False, glyphs: Glyphs.defaults, example: False, seed: [] }
 	parse : List(Str), Config -> Try(Config, [Invalid(Str)])
 	parse = |args, initial| {
 		var $c = initial
@@ -11,12 +12,13 @@ Options :: [].{
 		while $i < args.len() {
 			arg = args.get($i) ?? ""
 			match arg {
+				"example" if $i == 0 => { $c = { ..$c, example: True } }
 				"-h" | "--help" | "/h" | "/?" => { $c = { ..$c, help: True } }
 				"--about" => { $c = { ..$c, about: True } }
 				"--no-header" => { $c = { ..$c, no_header: True } }
 				"--ascii" => { $c = { ..$c, ascii: True } }
 				"--plain" => { $c = { ..$c, plain: True, color: "never" } }
-				"--headers" | "--header" | "--widths" | "--align" | "--overflow" | "--terminal-width" | "--color" | "--decimal-separator" => {
+				"--seed" | "--headers" | "--header" | "--widths" | "--align" | "--overflow" | "--terminal-width" | "--color" | "--decimal-separator" => {
 					$i = $i + 1
 					value = match args.get($i) {
 						Ok(v) => v
@@ -24,6 +26,10 @@ Options :: [].{
 					}
 					parts = value.split_on(",")
 					match arg {
+						"--seed" => {
+							if !$c.example or $c.seed != [] { return Err(Invalid("--seed is allowed once, after example")) }
+							$c = { ..$c, seed: [Example.seed(value)?] }
+						}
 						"--headers" => { $c = { ..$c, headers: $c.headers.concat(parts) } }
 						"--header" => { $c = { ..$c, headers: $c.headers.append(value) } }
 						"--widths" => {

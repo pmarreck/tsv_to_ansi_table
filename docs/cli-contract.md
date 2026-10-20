@@ -30,6 +30,30 @@ error. Display-width and grapheme behavior will be documented with the pinned
 Unicode data version and limitations; terminal-dependent ambiguous widths use
 one cell. Original numeric text and precision are preserved.
 
+## Seeded examples
+
+`example [--seed SEED] [OPTIONS]` replaces stdin with a generated table.
+The subcommand must be the first argument. A single optional seed accepts
+unsigned decimal or `0x`/`0X` hexadecimal values in [0, 2^256). Reject signs,
+whitespace, separators, fractions, empty values, and overflow. Print its
+canonical lowercase 64-digit hexadecimal form as `seed=0x…` on stderr.
+Without a seed, obtain OS randomness at the I/O boundary, then use the same
+pure deterministic generator. Help/about do not generate data or report seeds.
+
+Generate 4–6 columns and 12 data rows. Select headings from the shared
+100-entry vocabulary. The first column is text, the second numeric; remaining
+types are random. Numeric columns choose 0–6 decimal places and a 1–5 digit
+integer range; each cell has a one-in-four chance of a minus sign. Preserve
+trailing decimal zeroes. Text cells concatenate phrases separated by a single
+space, using `min(8, 1 + floor(Exp(rate=0.5)))` phrases per cell.
+
+Generation uses the random project's matching Roc and Zig libraries and a
+fixed draw order. Rendering consumes no random values. Reproducibility requires
+the same generator version, vocabulary, seed, options, and effective terminal,
+locale, and glyph configuration. Default locale selection also determines the
+generated decimal separator. `--no-header` omits the generated header without
+discarding a data row; manual headers retain their usual replace/prepend rules.
+
 ## Implementation checks
 
 - Parsing: distinguish EOF from a blank row and retain trailing fields.

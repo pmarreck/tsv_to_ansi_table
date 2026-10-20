@@ -1,6 +1,7 @@
 app [main!] {
 	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.25.0/CZsY7tYZwR3rj9kYbpaCfxki2yVAaRL8bBwMLvB2xkbA.tar.zst",
 	unicode: "https://github.com/roc-lang/unicode/releases/download/4.2.0/4W8SHzvwet9hH9qZewJ1J1CVQoH7YKA6zyijWFTB3y1w.tar.zst",
+	random: "https://github.com/pmarreck/random/archive/76ada4a2d6259569f901985b08d8d5ad10f45059.tar.gz",
 }
 import Table
 import Text
@@ -9,6 +10,7 @@ import Render
 import Engine
 import BuildInfo
 import Glyphs
+import Example
 import pf.Console
 import pf.Env
 import pf.Cmd
@@ -16,6 +18,8 @@ import pf.OsStr
 import pf.Stdin
 import pf.Stdout
 import pf.Stderr
+import pf.Random
+import "help.txt" as help : Str
 
 main! = |native_args| {
 	Stderr.write!(BuildInfo.banner) ?? {}
@@ -73,6 +77,21 @@ run! = |args| {
 		if columns > 0 and Env.var_str!("NO_COLOR").is_err() and (Env.var_str!("TERM") ?? "") != "dumb" "always" else "never"
 	} else config.color
 	var $state = Engine.start({ ..config, color })
+	if config.example {
+		seed = match config.seed {
+			[value] => value
+			_ => Example.seed(Random.seed_u64!()?.to_str())?
+		}
+		rows = Example.generate(seed, config.decimal)?
+		Stderr.line!("seed=${seed}")?
+		input = if config.no_header rows.drop_first(1) else rows
+		for row in input {
+			step = Engine.push($state, row)?
+			if step.output != "" { Stdout.write!(step.output)? }
+			$state = step.state
+		}
+		return Stdout.write!(Engine.finish($state)?.output)
+	}
 	var $eof = False
 	while !$eof {
 		match Stdin.line!() {
@@ -88,6 +107,3 @@ run! = |args| {
 	last = Engine.finish($state)?
 	Stdout.write!(last.output)
 }
-
-
-help = "tsv-to-ansi-table: render UTF-8 TSV from stdin\n\nUsage: tsv-to-ansi-table [OPTIONS] < input.tsv\n\n  --no-header                 Treat the first input row as data\n  --headers NAME,NAME         Replace the input header (prepend with --no-header)\n  --header NAME               Append one explicit header name; repeatable\n  --widths auto,12,8          Content widths; any auto buffers until EOF\n  --align auto,left,right,center  Positional column alignment\n  --overflow MODE,MODE        auto, truncate-left, truncate-right (truncate),\n                             prefix-ellipsis, or suffix-ellipsis\n  --terminal-width N          Total output width (otherwise TTY, COLUMNS, or 80)\n  --decimal-separator CHAR    Override locale decimal point: . , or ٫\n  --color auto|always|never   Auto uses color on a TTY unless NO_COLOR is set\n  --ascii                    ASCII borders and ellipsis\n  --plain                    Borderless, colorless aligned output\n  -h, --help                 Show help\n  --about                    Show version and compiled platform\n\nTSV_TO_ANSI_TABLE_GLYPHS accepts JSON overrides for border/ellipsis glyphs.\nExample: {\"top_left\":\"╭\",\"top_right\":\"╮\",\"ellipsis\":\"~\"}\nEach override must be one safe one-cell grapheme; omitted names keep defaults.\n--ascii overrides the custom profile; --plain still uses its ellipsis.\n\nNumbers are inferred from the first data row and right-aligned by default.\nText and numeric digits are preserved; long cells are clipped without splitting\ngraphemes. Paths keep their tail by default. Ragged rows and invalid UTF-8 fail.\nAll fixed widths stream after header/first-data-row inference; late errors can\nfollow already-written rows. Redirected output keeps Unicode, without color.\n"

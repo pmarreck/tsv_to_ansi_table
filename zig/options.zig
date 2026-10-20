@@ -15,6 +15,8 @@ pub const Config = struct {
 	decimal: []const u8 = ".",
 	help: bool = false,
 	about: bool = false,
+	example: bool = false,
+	seed: ?[32]u8 = null,
 };
 pub fn parse(a: A, args: []const []const u8, initial: Config) !Config {
 	var config = initial;
@@ -22,6 +24,7 @@ pub fn parse(a: A, args: []const []const u8, initial: Config) !Config {
 	while (i < args.len) : (i += 1) {
 		const arg = args[i];
 		if (!std.unicode.utf8ValidateSlice(arg)) return error.InvalidOptions;
+		if (i == 0 and eq(arg, "example")) { config.example = true; continue; }
 		if (eq(arg, "--help") or eq(arg, "-h") or eq(arg, "/h") or eq(arg, "/?")) { config.help = true; continue; }
 		if (eq(arg, "--about")) { config.about = true; continue; }
 		if (eq(arg, "--no-header")) { config.no_header = true; continue; }
@@ -32,7 +35,10 @@ pub fn parse(a: A, args: []const []const u8, initial: Config) !Config {
 		const value = args[i];
 		if (!std.unicode.utf8ValidateSlice(value)) return error.InvalidOptions;
 		var parts = std.mem.splitScalar(u8, value, ',');
-		if (eq(arg, "--headers") or eq(arg, "--header")) {
+		if (eq(arg, "--seed")) {
+			if (!config.example or config.seed != null) return error.InvalidOptions;
+			config.seed = try @import("example.zig").seed(value);
+		} else if (eq(arg, "--headers") or eq(arg, "--header")) {
 			var names: std.ArrayList([]const u8) = .empty;
 			try names.appendSlice(a, config.headers);
 			if (eq(arg, "--header")) try names.append(a, value) else while (parts.next()) |p| try names.append(a, p);

@@ -1,6 +1,12 @@
 tsv-to-ansi-table: render UTF-8 TSV from stdin
 
 Usage: tsv-to-ansi-table [OPTIONS] < input.tsv
+       tsv-to-ansi-table example [--seed SEED] [OPTIONS]
+
+  example                    Generate 12 rows with 4-6 mixed text/numeric columns
+  --seed SEED                Replay an example (unsigned decimal or 0x hex, <2^256)
+                             Without a seed, choose one from OS randomness.
+                             The replay seed is always printed on stderr.
 
   --no-header                 Treat the first input row as data
   --headers NAME,NAME         Replace the input header (prepend with --no-header)

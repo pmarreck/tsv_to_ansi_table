@@ -4,6 +4,7 @@ const core = @import("core.zig");
 const options = @import("options.zig");
 const render = @import("render.zig");
 const text = @import("text.zig");
+const example = @import("example.zig");
 const c = @cImport({
 	@cInclude("stdio.h");
 	@cInclude("stdlib.h");
@@ -25,6 +26,7 @@ pub fn main(init: std.process.Init) void {
 	run(init) catch |err| {
 		const message = switch (err) {
 			error.InvalidOptions => "Invalid option or value; use --help",
+			error.InvalidSeed => "Seed must be an unsigned decimal or 0x hexadecimal integer smaller than 2^256",
 			error.InvalidGlyphs => "TSV_TO_ANSI_TABLE_GLYPHS must be a JSON object of known glyph names with safe one-cell graphemes",
 			error.InvalidUtf8 => "Input and arguments must be UTF-8",
 			error.RaggedRow => "Ragged row: every row must have the same number of fields",
@@ -59,12 +61,31 @@ fn run(init: std.process.Init) !void {
 	var buffered: std.ArrayList(render.Row) = .empty;
 	var layout: ?render.Layout = null;
 	var seen: usize = 0;
+	var generated: ?[]const render.Row = null;
+	var generated_index: usize = if (config.no_header) 1 else 0;
+	if (config.example) {
+		const seed = config.seed orelse fresh: {
+			var bytes: [32]u8 = undefined;
+			try init.io.randomSecure(&bytes);
+			break :fresh bytes;
+		};
+		generated = try example.generate(a, seed, config.decimal);
+		const report = try std.fmt.allocPrint(a, "seed={s}\n", .{try example.canonical(a, seed)});
+		if (c.fwrite(report.ptr, 1, report.len, tsv_stderr()) != report.len or c.fflush(tsv_stderr()) != 0) return error.OutputFailure;
+	}
 	while (true) {
 		_ = scratch.reset(.free_all);
 		const temp = scratch.allocator();
-		const line = (try readLine(temp)) orelse break;
-		if (!std.unicode.utf8ValidateSlice(line)) return error.InvalidUtf8;
-		const cells = try core.parseRow(temp, line);
+		const cells = if (generated) |rows| next: {
+			if (generated_index == rows.len) break;
+			const row = rows[generated_index];
+			generated_index += 1;
+			break :next row;
+		} else next: {
+			const line = (try readLine(temp)) orelse break;
+			if (!std.unicode.utf8ValidateSlice(line)) return error.InvalidUtf8;
+			break :next try core.parseRow(temp, line);
+		};
 		if (seen == 0 and !config.no_header) {
 			if (header.len > 0 and header.len != cells.len) return error.HeaderCount;
 			if (header.len == 0) header = try copyRow(a, cells);

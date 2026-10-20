@@ -2,7 +2,8 @@
 	description = "Roc TSV to terminal table renderer";
 	inputs.nixpkgs.url = "github:NixOS/nixpkgs/9fbb54b33e91ee4ca368e35a78e0613c720600b3";
 	inputs.performance-profiling.url = "github:pmarreck/performance_profiling/a04d62a441a5b9315e81f6277f57f7eddb9a57af";
-	outputs = { self, nixpkgs, performance-profiling }: let
+	inputs.random = { url = "github:pmarreck/random/76ada4a2d6259569f901985b08d8d5ad10f45059"; flake = false; };
+	outputs = { self, nixpkgs, performance-profiling, random }: let
 		systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
 		forAll = nixpkgs.lib.genAttrs systems;
 		toolsFor = system: let
@@ -76,13 +77,14 @@
 				version = "0.1.0";
 				src = t.pkgs.lib.fileset.toSource {
 					root = ./.;
-					fileset = t.pkgs.lib.fileset.unions [ ./src ./zig ./platform ./tests ./scripts ./main.zig ./build.zig ./test ];
+					fileset = t.pkgs.lib.fileset.unions [ ./src ./zig ./platform ./tests ./scripts ./main.zig ./build.zig ./build.zig.zon ./test ];
 				};
 				strictDeps = true;
 				nativeBuildInputs = [ t.roc t.pkgs.file t.pkgs.zig_0_16 (t.pkgs.luajit.withPackages (lua: [ lua.cjson ])) t.pkgs.jq ];
 				ROC_PLATFORM = t.platform;
 				ROC_HTTP = t.http;
 				ROC_UNICODE = t.unicode;
+				RANDOM_SRC = random;
 				UTF8PROC_SRC = t.pkgs.utf8proc.src;
 				TSV_ROC_ENV = "1";
 				buildPhase = ''
@@ -103,12 +105,14 @@
 					export HOME="$TMPDIR/home" XDG_CACHE_HOME="$TMPDIR/cache"
 					export ZIG_GLOBAL_CACHE_DIR="$TMPDIR/zig-global" ZIG_LOCAL_CACHE_DIR="$TMPDIR/zig-local"
 					mkdir -p "$HOME" "$out/bin"
+					mkdir -p "$out/share/licenses/random"
+					cp "$RANDOM_SRC/LICENSE" "$out/share/licenses/random/LICENSE"
 					patchShebangs scripts
 					${t.pkgs.lib.optionalString (rocTarget != null) ''
 						scripts/roc-env build src/main.roc --opt=speed --target=${rocTarget} --output="$out/bin/tsv-to-ansi-table-roc${t.pkgs.lib.optionalString (t.pkgs.lib.hasInfix "windows" target) ".exe"}"
 					''}
 					unset NIX_CFLAGS_COMPILE NIX_LDFLAGS
-					zig build -Dutf8proc="$UTF8PROC_SRC" -Doptimize=ReleaseFast -Dtarget=${target} --prefix "$out" -j4
+					scripts/zig-env build -Dutf8proc="$UTF8PROC_SRC" -Doptimize=ReleaseFast -Dtarget=${target} --prefix "$out" -j4
 				'';
 				# Cross builds establish compilation/linking; native suites run in default.
 				doCheck = false;
@@ -135,6 +139,7 @@
 				ROC_PLATFORM = t.platform;
 				ROC_HTTP = t.http;
 				ROC_UNICODE = t.unicode;
+				RANDOM_SRC = random;
 				UTF8PROC_SRC = t.pkgs.utf8proc.src;
 			};
 		});

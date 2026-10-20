@@ -32,6 +32,36 @@ printf 'Name\tCount\na\t12\n' | result/bin/tsv-to-ansi-table-zig
 
 ## Table behavior
 
+Try a generated table without preparing input:
+
+```bash
+./run example
+./run example --seed 42
+./run example --seed 42 --ascii --terminal-width 100
+```
+
+`example` creates 12 rows and 4–6 columns from a shared list of 100 corporate
+and LLM-themed words and phrases. It always includes text and numeric columns.
+Each numeric column gets a random magnitude and 0–6 decimal places. Text cells
+combine 1–8 phrases with exponentially distributed lengths, so short cells are
+common and long ones exercise clipping. Headings come from the same vocabulary.
+
+The table goes to stdout; `seed=0x…` goes to stderr. With no `--seed`, the command
+chooses a seed from OS randomness. Replay that seed as an unsigned decimal or
+hexadecimal integer smaller than 2^256. Both implementations produce identical
+tables for the same seed, options, and terminal/locale settings. For byte-for-byte
+fixtures, explicitly set `--terminal-width`, `--decimal-separator`, and color or
+plain mode, and keep the glyph environment unchanged. Replay is tied to this
+generator version and vocabulary.
+
+The subcommand ignores stdin. `--no-header` hides the generated headings;
+manual headers replace them, or prepend to the 12 data rows with `--no-header`.
+All existing layout and glyph options apply. `--seed` is valid only after
+`example`. No separate `random` executable or sibling checkout is needed at
+runtime: Nix pins [random](https://github.com/pmarreck/random) at
+`76ada4a2d6259569f901985b08d8d5ad10f45059`, and each implementation imports its
+matching pure library.
+
 The first row supplies headers by default. Numeric classification comes from
 the first **data** row, so numeric columns, including their headers, align right;
 other columns align left. Later rows preserve their original digits and spelling.
@@ -119,7 +149,8 @@ width policy, not a claim to reproduce every terminal's glyph layout.
 
 `./test` includes Roc expectations, safety-enabled Zig allocator tests, shared
 CLI error/header/Unicode tests, a producer handshake proving fixed-width output
-before EOF, 216 cross-implementation option combinations, debug announcements,
+before EOF, 216 input-table and 18 seeded-example cross-implementation cases,
+seed replay and validation, example generation without stdin, debug announcements,
 and a benchmark oracle that rejects missing, reordered, rounded, or extra rows.
 Expected stderr is captured. Native runtime verification is on Linux x86_64.
 

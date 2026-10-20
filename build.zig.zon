@@ -1,0 +1,13 @@
+.{
+	.name = .tsv_to_ansi_table,
+	.fingerprint = 0xedafca128e75749a,
+	.version = "0.1.0",
+	.minimum_zig_version = "0.16.0",
+	.dependencies = .{
+		.random = .{
+			.url = "https://github.com/pmarreck/random/archive/76ada4a2d6259569f901985b08d8d5ad10f45059.tar.gz",
+			.hash = "random-0.4.0-dyRyrJ6FCQA374i2644KvuGmR-iz0ob8pUigAxNVL0WD",
+		},
+	},
+	.paths = .{ "build.zig", "build.zig.zon", "main.zig", "zig", "src", "platform", "LICENSE" },
+}

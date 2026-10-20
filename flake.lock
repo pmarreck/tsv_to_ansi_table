@@ -86,10 +86,28 @@
         "type": "github"
       }
     },
+    "random": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792006237,
+        "narHash": "sha256-ixFWmP1Raenwc93I4FKx8u9mN5SDGBXzHbTB36M7vEI=",
+        "owner": "pmarreck",
+        "repo": "random",
+        "rev": "76ada4a2d6259569f901985b08d8d5ad10f45059",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pmarreck",
+        "repo": "random",
+        "rev": "76ada4a2d6259569f901985b08d8d5ad10f45059",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "performance-profiling": "performance-profiling"
+        "performance-profiling": "performance-profiling",
+        "random": "random"
       }
     }
   },

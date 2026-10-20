@@ -4,6 +4,7 @@
 /.build-work/
 /result
 /result-*
+/zig-pkg/
 /bin/linux/
 /bin/macos/
 /bin/windows/

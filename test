@@ -12,7 +12,7 @@ unset TSV_TO_ANSI_TABLE_GLYPHS
 scripts/roc-env test src/main.roc --no-cache || failures=$((failures + 1))
 scripts/roc-env check src/main.roc || failures=$((failures + 1))
 unset NIX_CFLAGS_COMPILE NIX_LDFLAGS
-zig build test -Dutf8proc="$UTF8PROC_SRC" -j4 || failures=$((failures + 1))
+scripts/zig-env build test -Dutf8proc="$UTF8PROC_SRC" -j4 || failures=$((failures + 1))
 luajit tests/benchmark/test-oracle.lua || failures=$((failures + 1))
 if [[ -n ${TSV_TEST_BIN:-} ]]; then
 	products=$TSV_TEST_BIN
@@ -25,7 +25,7 @@ else
 	products="$work/bin"
 fi
 for implementation in roc zig; do
-	for suite in tests/cli/check tests/cli/errors tests/cli/streaming tests/cli/semantics tests/cli/glyphs; do
+	for suite in tests/cli/check tests/cli/errors tests/cli/streaming tests/cli/semantics tests/cli/glyphs tests/cli/example; do
 		bash "$suite" "$products/tsv-to-ansi-table-$implementation" || failures=$((failures + 1))
 	done
 done

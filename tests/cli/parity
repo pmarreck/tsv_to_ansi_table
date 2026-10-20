@@ -27,5 +27,21 @@ for widths in 'auto,auto,auto' '5,12,9' '5,auto,9'; do
 		done
 	done
 done
+for seed in 0 1 2 42 18446744073709551615 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff; do
+	for style in unicode ascii plain; do
+		args=(example --seed "$seed" --terminal-width 80 --color never --decimal-separator ,)
+		[[ $style != ascii ]] || args+=(--ascii)
+		[[ $style != plain ]] || args+=(--plain)
+		out= err= rc=
+		capture "$roc" "${args[@]}"
+		expected=$out expected_err=$err expected_rc=$rc
+		capture "$zig" "${args[@]}"
+		if [[ $rc != 0 || $expected_rc != 0 || $out != "$expected" || $err != "$expected_err" ]]; then
+			printf 'FAIL example parity seed=%s style=%s\n' "$seed" "$style"
+			failures=$((failures + 1))
+		fi
+		cases=$((cases + 1))
+	done
+done
 if [[ $failures == 0 ]]; then printf 'PASS %s cross-implementation option combinations\n' "$cases"; fi
 exit "$failures"

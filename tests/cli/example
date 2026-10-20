@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -u
+cli=${1:?exact executable required}
+source "$(dirname "$0")/../capture.bash"
+failures=0
+assert() { if ! "$@"; then printf 'FAIL example: %s\n' "$*"; failures=$((failures + 1)); fi; }
+out= err= rc=
+capture "$cli" example --seed 42 --plain --terminal-width 2000
+assert test "$rc" = 0
+assert test -n "$out"
+assert test "$err" = 'seed=0x000000000000000000000000000000000000000000000000000000000000002a'
+expected=$out
+assert test "$(printf '%s\n' "$out" | wc -l)" = 13
+capture "$cli" example --seed 0x2a --plain --terminal-width 2000
+assert test "$rc" = 0
+assert test "$out" = "$expected"
+capture "$cli" example --seed 43 --plain --terminal-width 2000
+assert test "$rc" = 0
+assert test "$out" != "$expected"
+capture "$cli" example --plain --terminal-width 2000
+assert test "$rc" = 0
+fresh=$out
+seed=${err#seed=}
+assert test "${#seed}" = 66
+capture "$cli" example --seed "$seed" --plain --terminal-width 2000
+assert test "$rc" = 0
+assert test "$out" = "$fresh"
+for invalid in '' -1 1.5 wat 0x 0x10000000000000000000000000000000000000000000000000000000000000000; do
+	capture "$cli" example --seed "$invalid"
+	assert test "$rc" != 0
+	assert test -z "$out"
+	assert test -n "$err"
+done
+capture "$cli" --seed 42
+assert test "$rc" != 0
+capture "$cli" example --seed
+assert test "$rc" != 0
+capture "$cli" example --seed 1 --seed 2
+assert test "$rc" != 0
+capture "$cli" example --help
+assert test "$rc" = 0
+assert test -z "$err"
+assert test "${out/example/}" != "$out"
+# Example ignores stdin, even while its producer has not sent EOF.
+# The timeout is a deadlock watchdog, not a timing assertion.
+coproc DEMO { exec "$cli" example --seed 42 --plain --terminal-width 80 2>/dev/null; }
+demo_pid=$DEMO_PID
+exec {send_fd}>&"${DEMO[1]}"
+exec {read_fd}<&"${DEMO[0]}"
+first=''
+if ! IFS= read -r -t 20 first <&"$read_fd"; then
+	printf 'FAIL example waits for stdin\n'; failures=$((failures + 1))
+	kill "$demo_pid" 2>/dev/null
+fi
+exec {send_fd}>&-
+while IFS= read -r -t 20 line <&"$read_fd"; do :; done
+wait "$demo_pid"
+assert test "$?" = 0
+exec {read_fd}<&-
+capture "$cli" example --seed 42 --no-header --headers A,B,C,D,E --plain --terminal-width 2000
+assert test "$rc" = 0
+assert test "$(printf '%s\n' "$out" | wc -l)" = 13
+assert test "${out%%$'\n'*}" != "${expected%%$'\n'*}"
+body=$(printf '%s\n' "${expected#*$'\n'}" | awk '{$1=$1; print}')
+capture "$cli" example --seed 42 --headers A,B,C,D,E --plain --terminal-width 2000
+assert test "$rc" = 0
+assert test "$(printf '%s\n' "${out#*$'\n'}" | awk '{$1=$1; print}')" = "$body"
+capture "$cli" example --seed 42 --no-header --plain --terminal-width 2000
+assert test "$rc" = 0
+# Removing a header may narrow padding, so compare parsed cells rather than spaces.
+assert test "$(printf '%s\n' "$out" | awk '{$1=$1; print}')" = "$body"
+capture "$cli" example --seed 42 --widths 8,12,8,8,8 --terminal-width 80 --color never
+assert test "$rc" = 0
+capture env TSV_TO_ANSI_TABLE_GLYPHS='{"top_left":"@"}' "$cli" example --seed 42 --color never
+assert test "$rc" = 0
+assert test "${out:0:1}" = '@'
+# Sets of deterministic seeds exercise mixed column types, precision, and lengths.
+for seed in 0 1 2 3 4 5 6 7; do
+	capture "$cli" example --seed "$seed" --no-header --plain --terminal-width 2000 --decimal-separator .
+	assert test "$rc" = 0
+	if ! printf '%s\n' "$out" | awk '
+		{ sub(/^ +/, ""); sub(/ +$/, ""); n=split($0, cells, /  +/)
+		  if (n<4 || n>6 || (NR>1 && n!=columns)) bad=1; columns=n
+		  for(i=1;i<=n;i++) { numeric=(cells[i] ~ /^-?[0-9]+(\.[0-9]+)?$/)
+		    if(NR==1) types[i]=numeric; else if(types[i]!=numeric) bad=1
+		    if(numeric) { p=index(cells[i],"."); precision=p ? length(cells[i])-p : 0
+		      if(precision>6) bad=1; if(NR==1) places[i]=precision; else if(precision!=places[i]) bad=1 }
+		    if(numeric) numbers++; else texts++
+		  }
+		}
+		END { exit(bad || NR!=12 || !numbers || !texts) }
+	'; then printf 'FAIL example data shape for seed %s\n' "$seed"; failures=$((failures + 1)); fi
+done
+if [[ $failures == 0 ]]; then printf 'PASS example replay, seed validation, and data shapes\n'; fi
+exit "$failures"
