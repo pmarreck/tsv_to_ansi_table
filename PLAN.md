@@ -6,6 +6,7 @@
 
 ## Completed
 
+- [x] Fill purpose notes for all tracked files and key directories, preserve depth=3, and verify no orphaned notes (done 2026-10-20 10:55 EDT).
 - [x] Add validated environment glyph overrides to both implementations, pass all tests/target builds and verify published exact-commit CI (done 2026-10-15 17:35 EDT; commit 04ce607).
 - [x] Repeat ./bm on the glyph update and record verified UNBASELINED observations (done 2026-10-15 17:35 EDT; measured commit 04ce607).
 - [x] Publish native/cross packages and verify exact-commit Mechatron Prime CI (done 2026-10-15 17:26 EDT; commit b665fbe).
