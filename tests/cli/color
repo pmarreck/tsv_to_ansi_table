@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -u
+cli=${1:?exact executable required}
+source tests/capture.bash
+failures=0
+out= err= rc=
+feed() { printf 'Name\tN\na\t12\n' | "$cli" --widths 4,2 "$@"; }
+for style in unicode ascii custom; do
+	args=()
+	export TSV_TO_ANSI_TABLE_GLYPHS=''
+	separator='│'
+	if [[ $style == ascii ]]; then args+=(--ascii); separator='|'; fi
+	if [[ $style == custom ]]; then export TSV_TO_ANSI_TABLE_GLYPHS='{"vertical":"!"}'; separator='!'; fi
+	capture feed --color always "${args[@]}"
+	lines=$out
+	header=${lines#*$'\n'}
+	header=${header%%$'\n'*}
+	# Only cell contents may carry bold cyan; every separator uses the same
+	# terminal-default foreground as the horizontal borders and data rows.
+	expected="${separator} "$'\e[1;36mName\e[0m'" ${separator} "$'\e[1;36m N\e[0m'" ${separator}"
+	if [[ $rc != 0 || -n $err || $header != "$expected" ]]; then
+		printf 'FAIL header color boundaries (%s): %q\n' "$style" "$header"
+		failures=$((failures + 1))
+	fi
+	# Dropping the header line must leave entirely unstyled borders and data.
+	rest=${lines/"$header"/}
+	if [[ $rest == *$'\e'* ]]; then printf 'FAIL color outside header cells (%s)\n' "$style"; failures=$((failures + 1)); fi
+	for mode in never plain no-header; do
+		opts=(--color never)
+		[[ $mode != plain ]] || opts=(--color always --plain)
+		[[ $mode != no-header ]] || opts=(--color always --no-header)
+		capture feed "${opts[@]}" "${args[@]}"
+		if [[ $rc != 0 || -n $err || $out == *$'\e'* ]]; then
+			printf 'FAIL unwanted ANSI (%s %s)\n' "$style" "$mode"
+			failures=$((failures + 1))
+		fi
+	done
+done
+if [[ $failures == 0 ]]; then printf 'PASS header-only color with neutral separators and unstyled modes\n'; fi
+exit "$failures"

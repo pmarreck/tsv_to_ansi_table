@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -u
+product=$(readlink -f "${1:?product root required}") || exit 1
+source tests/capture.bash
+source scripts/host
+work=$(mktemp -d "${TMPDIR:-/tmp}/tsv-publish.XXXXXXXX") || exit 1
+fixture="$work/project with spaces"
+mkdir -p "$fixture/scripts" || exit 1
+cp scripts/host scripts/publish "$fixture/scripts/" || exit 1
+cd "$fixture" || exit 1
+failures=0
+out= err= rc=
+fail() { printf 'FAIL publication: %s\n' "$1"; failures=$((failures + 1)); }
+native="bin/$tsv_os/$tsv_arch"
+entry=bin/tsv-to-ansi-table
+for attempt in first repeated; do
+	capture bash scripts/publish "$product"
+	[[ $rc == 0 && -z $err ]] || fail "$attempt publication failed: $err"
+	[[ -L $entry && -x $entry ]] || fail "$attempt publication lacks executable PATH link"
+	[[ $(readlink "$entry") == "$tsv_os/$tsv_arch/tsv-to-ansi-table-zig" ]] || fail "$attempt publication selected wrong host or implementation"
+	[[ $(readlink -f "$entry") == "$product/bin/tsv-to-ansi-table-zig" ]] || fail "$attempt publication resolves to wrong product"
+	capture env PATH="$PWD/bin:$PATH" bash -c 'tsv-to-ansi-table --about'
+	[[ $rc == 0 && -z $err && $out == *'(Zig;'* ]] || fail "$attempt PATH invocation did not run Zig"
+done
+# A failed verification must leave the last good command usable.
+mkdir -p "$work/invalid/bin" || exit 1
+printf 'not an executable\n' > "$work/invalid/bin/tsv-to-ansi-table-roc"
+capture bash scripts/publish "$work/invalid"
+[[ $rc != 0 && $err == *'Build artifact does not match host'* ]] || fail 'invalid product accepted'
+[[ $(readlink -f "$entry") == "$product/bin/tsv-to-ansi-table-zig" ]] || fail 'failed verification changed PATH entry'
+# Refuse an existing user file before changing any of the platform links.
+if [[ -L $entry ]]; then mv "$entry" "$work/saved-entry" || exit 1; fi
+printf 'keep this file\n' > "$entry"
+ln -s "$work/prior-product" "$native/prior"
+mv -Tf "$native/prior" "$native/tsv-to-ansi-table-roc" || exit 1
+capture bash scripts/publish "$product"
+[[ $rc != 0 && $err == *'Refusing to replace non-symlink bin/tsv-to-ansi-table'* ]] || fail 'existing user file was not refused'
+[[ ! -L $entry && $(cat "$entry") == 'keep this file' ]] || fail 'existing user file changed'
+[[ $(readlink "$native/tsv-to-ansi-table-roc") == "$work/prior-product" ]] || fail 'refused publication changed a platform link'
+# A stale symlink is replaceable, including one whose target no longer exists.
+mv "$entry" "$work/saved-user-file" || exit 1
+ln -s "$work/missing" "$entry" || exit 1
+capture bash scripts/publish "$product"
+[[ $rc == 0 && -z $err && -x $entry ]] || fail 'stale symlink was not replaced'
+[[ $(readlink -f "$entry") == "$product/bin/tsv-to-ansi-table-zig" ]] || fail 'replacement selected wrong product'
+if [[ $failures == 0 ]]; then printf 'PASS current-host PATH publication, retries, and failure preservation\n'; fi
+exit "$failures"

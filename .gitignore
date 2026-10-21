@@ -8,3 +8,4 @@
 /bin/linux/
 /bin/macos/
 /bin/windows/
+/bin/tsv-to-ansi-table

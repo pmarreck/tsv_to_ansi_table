@@ -80,7 +80,7 @@
 					fileset = t.pkgs.lib.fileset.unions [ ./src ./zig ./platform ./tests ./scripts ./main.zig ./build.zig ./build.zig.zon ./test ];
 				};
 				strictDeps = true;
-				nativeBuildInputs = [ t.roc t.pkgs.file t.pkgs.zig_0_16 (t.pkgs.luajit.withPackages (lua: [ lua.cjson ])) t.pkgs.jq ];
+				nativeBuildInputs = [ t.roc t.pkgs.file t.pkgs.flock t.pkgs.zig_0_16 (t.pkgs.luajit.withPackages (lua: [ lua.cjson ])) t.pkgs.jq ];
 				ROC_PLATFORM = t.platform;
 				ROC_HTTP = t.http;
 				ROC_UNICODE = t.unicode;

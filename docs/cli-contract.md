@@ -17,6 +17,8 @@ least one cell. A terminal too narrow for this minimum produces an error.
 `--terminal-width N` overrides detected terminal columns. Redirection falls
 back to 80 columns, with `COLUMNS` accepted as an explicit environment override.
 `--color auto|always|never` defaults to auto (TTY, unless NO_COLOR is set).
+Header cell text uses bold cyan; separators and borders keep the terminal's
+normal foreground color. Color is reset before each header separator.
 `--ascii` uses ASCII borders and `...` (or a clipped marker in very narrow cells).
 `--plain` omits borders, color and row padding, with two spaces between columns.
 Both alternatives keep the same width and alignment rules. Redirected output

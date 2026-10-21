@@ -16,7 +16,7 @@ and pipelines, with Nix-pinned dependencies and an MIT-licensed public repositor
 - Follow established CLI conventions: clear help/about, UTF-8, useful errors on stderr, ANSI/color controls, plain/ASCII alternatives and documented redirected-output behavior.
 - Allow named border and ellipsis glyph overrides through an environment variable while preserving display-width and terminal-control safety guarantees.
 - Provide an example subcommand using the random project's deterministic libraries, replayable reported seeds, and a small shared corporate/LLM-themed vocabulary to demonstrate mixed column types, precision, and cell lengths.
-- Provide `./build` for an optimized current-platform build, `./test` for the complete suite, and `./run` to build and run. Publish the executable under the project's platform-specific `bin/<os>/<arch>/` directory; generic `bin/` is reserved for portable scripts.
+- Provide `./build` for an optimized current-platform build, `./test` for the complete suite, and `./run` to build and run. Keep binaries under `bin/<os>/<arch>/` and publish `bin/tsv-to-ansi-table` as a generated link to the faster measured implementation for the current host so adding the project's `bin/` to PATH exposes the command.
 
 ## Design and verification
 

@@ -37,18 +37,20 @@ Render :: [].{
 	streaming = |config, count| config.widths.len() == count and config.widths.all(|w| w > 0)
 	row = |layout, cells, header| {
 		glyphs = if layout.config.ascii Glyphs.ascii else layout.config.glyphs
+		color = header and layout.config.color == "always" and !layout.config.plain
 		var $out = []
 		for i in 0..<layout.widths.len() {
 			w = layout.widths.get(i) ?? 1
 			value = Text.safe(cells.get(i) ?? "")
 			clipped = Text.clip_with(value, w, layout.overflow.get(i) ?? "auto", glyphs.ellipsis)
 			padded = Text.pad(clipped, w, layout.align.get(i) ?? "left")
-			$out = $out.append(if layout.config.plain padded else " ${padded} ")
+			styled = if color "\u(1b)[1;36m${padded}\u(1b)[0m" else padded
+			$out = $out.append(if layout.config.plain styled else " ${styled} ")
 		}
 		separator = if layout.config.plain "  " else glyphs.vertical
 		body = $out |> Str.join_with(separator)
 		line = if layout.config.plain body else "${separator}${body}${separator}"
-		if header and layout.config.color == "always" and !layout.config.plain "\u(1b)[1;36m${line}\u(1b)[0m\n" else "${line}\n"
+		"${line}\n"
 	}
 	border = |layout, kind| {
 		if layout.config.plain or layout.widths == [] { return "" }

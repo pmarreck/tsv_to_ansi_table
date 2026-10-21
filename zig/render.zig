@@ -41,7 +41,6 @@ pub fn row(a: A, layout: Layout, cells: Row, header: bool) ![]const u8 {
 	var out: std.ArrayList(u8) = .empty;
 	errdefer out.deinit(a);
 	const color = header and layout.config.color == .always and !layout.config.plain;
-	if (color) try out.appendSlice(a, "\x1b[1;36m");
 	const separator = if (layout.config.plain) "  " else g.vertical;
 	if (!layout.config.plain) try out.appendSlice(a, separator);
 	for (cells, 0..) |cell, i| {
@@ -52,11 +51,12 @@ pub fn row(a: A, layout: Layout, cells: Row, header: bool) ![]const u8 {
 		const padded = try text.pad(a, clipped, layout.widths[i], layout.alignments[i]);
 		defer a.free(padded);
 		if (!layout.config.plain) try out.append(a, ' ');
+		if (color) try out.appendSlice(a, "\x1b[1;36m");
 		try out.appendSlice(a, padded);
+		if (color) try out.appendSlice(a, "\x1b[0m");
 		if (!layout.config.plain) try out.append(a, ' ');
 		if (!layout.config.plain or i + 1 < cells.len) try out.appendSlice(a, separator);
 	}
-	if (color) try out.appendSlice(a, "\x1b[0m");
 	try out.append(a, '\n');
 	return out.toOwnedSlice(a);
 }

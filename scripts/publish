@@ -20,8 +20,7 @@ lock=".build-work/publish.lock"
 mkdir -p .build-work || exit 1
 exec 9>"$lock"
 flock 9 || exit 1
-for name in tsv-to-ansi-table-roc tsv-to-ansi-table-zig tsv-to-ansi-table; do
-	dest="bin/$tsv_os/$tsv_arch/$name"
+for dest in "bin/$tsv_os/$tsv_arch/tsv-to-ansi-table-roc" "bin/$tsv_os/$tsv_arch/tsv-to-ansi-table-zig" "bin/$tsv_os/$tsv_arch/tsv-to-ansi-table" bin/tsv-to-ansi-table; do
 	if [[ -e $dest && ! -L $dest ]]; then printf 'Refusing to replace non-symlink %s\n' "$dest" >&2; exit 1; fi
 done
 for name in tsv-to-ansi-table-roc tsv-to-ansi-table-zig tsv-to-ansi-table; do
@@ -29,3 +28,6 @@ for name in tsv-to-ansi-table-roc tsv-to-ansi-table-zig tsv-to-ansi-table; do
 	ln -s "$selected/bin/$name" "$dest.new.$$" || exit 1
 	mv -Tf "$dest.new.$$" "$dest" || exit 1
 done
+dest=bin/tsv-to-ansi-table
+ln -s "$tsv_os/$tsv_arch/tsv-to-ansi-table-zig" "$dest.new.$$" || exit 1
+mv -Tf "$dest.new.$$" "$dest" || exit 1

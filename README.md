@@ -17,10 +17,16 @@ Install Nix with flakes enabled, then:
 printf 'Name\tCount\na\t12\nb\t3\n' | ./run --ascii
 ```
 
-`./build` creates optimized binaries in `bin/<os>/<arch>/`. The default
-`tsv-to-ansi-table` selects Roc; `tsv-to-ansi-table-roc` and
-`tsv-to-ansi-table-zig` select implementations explicitly. `./run` builds first
-and forwards arguments to Roc. `./build --debug` publishes debug binaries that
+`./build` creates optimized binaries in `bin/<os>/<arch>/` and a
+`bin/tsv-to-ansi-table` link to the current host's Zig implementation. Add the
+project's `bin/` directory to PATH to use that command. Zig was 6.40–6.76 times
+faster in the [recorded benchmark workloads](docs/benchmark-results.md).
+Rebuild after moving the checkout to a different platform or architecture.
+
+The platform-specific and Nix package `tsv-to-ansi-table` aliases select Roc;
+`tsv-to-ansi-table-roc` and `tsv-to-ansi-table-zig` select implementations
+explicitly. `./run` builds first and forwards arguments to Roc.
+`./build --debug` publishes debug binaries that
 announce themselves on stderr. `./build --test` runs the complete suite first.
 
 A Nix package also installs all three commands:
@@ -30,7 +36,7 @@ nix build
 printf 'Name\tCount\na\t12\n' | result/bin/tsv-to-ansi-table-zig
 ```
 
-## Table behavior
+## Example tables
 
 Try a generated table without preparing input:
 
@@ -61,6 +67,62 @@ All existing layout and glyph options apply. `--seed` is valid only after
 runtime: Nix pins [random](https://github.com/pmarreck/random) at
 `76ada4a2d6259569f901985b08d8d5ad10f45059`, and each implementation imports its
 matching pure library.
+
+The following tables are captured stdout at 120 columns. Color is disabled for
+Markdown; the replay seed is printed separately on stderr. Clearing the glyph
+environment selects the default borders.
+
+### Seed 42
+
+```bash
+TSV_TO_ANSI_TABLE_GLYPHS= ./run example --seed 42 --terminal-width 120 --decimal-separator . --color never
+```
+
+```text
+┌────────────────────────┬────────────────────┬────────────────────────┬───────────────────────┬───────────────────────┐
+│ context                │ not just a chatbot │ latent space           │ attention             │ quarterly optimism    │
+├────────────────────────┼────────────────────┼────────────────────────┼───────────────────────┼───────────────────────┤
+│ horizontal             │        8855.639717 │ temperature zero take… │ stakeholder buy in    │ embeddings traction … │
+│ artisanal embeddings … │        7897.686536 │ moat prompt whisperer… │ sampling              │ in the ever evolving… │
+│ customer obsession st… │         -82.960028 │ vertical               │ latent space          │ agentic workflow mee… │
+│ vertical mission crit… │        1518.191594 │ alignment gentle remi… │ context window unloc… │ chain of thought      │
+│ north star metric del… │       -9142.380014 │ alignment              │ touch base            │ inference             │
+│ per my last email tho… │        9965.531589 │ in the ever evolving … │ flywheel              │ weights attention     │
+│ spreadsheet theater e… │       -4781.103940 │ tokens gradients take… │ alignment tax tracti… │ context agentic work… │
+│ seamless paradigm shi… │        6237.874156 │ touch base low hangin… │ bandwidth             │ transformer           │
+│ value proposition moa… │        4473.242296 │ please advise attenti… │ temperature as a lar… │ artisanal embeddings… │
+│ benchmark maximalism   │        8607.474019 │ zero shot confidence … │ alignment zero shot … │ please think harder   │
+│ calendar Tetris quart… │        1219.703522 │ vector database scala… │ chain of thought dee… │ spreadsheet theater … │
+│ temperature zero takes │       -7062.184980 │ temperature zero take… │ sent from my deck tr… │ locally grown halluc… │
+└────────────────────────┴────────────────────┴────────────────────────┴───────────────────────┴───────────────────────┘
+```
+
+### Seed 88
+
+```bash
+TSV_TO_ANSI_TABLE_GLYPHS= ./run example --seed 88 --terminal-width 120 --decimal-separator . --color never
+```
+
+```text
+┌───────────────────────────────────────────────┬───────────┬────────────────────┬───────────────────┬─────────────────┐
+│ benchmark maximalism                          │ inference │ let us unpack that │ few shot optimism │ move the needle │
+├───────────────────────────────────────────────┼───────────┼────────────────────┼───────────────────┼─────────────────┤
+│ GPU scarcity mindset                          │        69 │       -14155.30561 │                 7 │         4.28213 │
+│ please advise bandwidth                       │        98 │        29853.25476 │                 7 │         9.27640 │
+│ spreadsheet theater                           │        53 │        46735.00889 │                 6 │         9.77092 │
+│ sampling                                      │       -92 │        30397.79698 │                -0 │         2.92749 │
+│ take this offline synthetic wisdom per my la… │       -39 │        48346.28203 │                 5 │         2.00680 │
+│ agentic workflow pivot core competency ethic… │       -58 │        72110.61629 │                 7 │         9.24715 │
+│ stakeholders budget adjacent                  │         2 │        -2149.88572 │                 5 │        -1.17485 │
+│ executive presence                            │        12 │       -20815.13705 │                 9 │         0.29166 │
+│ nuanced perspective                           │        10 │        13875.61123 │                 7 │         8.62797 │
+│ headcount roadmap embeddings logits spreadsh… │         1 │       -24180.38477 │                 3 │         3.01422 │
+│ attention                                     │        32 │        27479.49970 │                 3 │        -7.86357 │
+│ actionable insights                           │        66 │       -73367.88153 │                -6 │         7.02302 │
+└───────────────────────────────────────────────┴───────────┴────────────────────┴───────────────────┴─────────────────┘
+```
+
+## Table behavior
 
 The first row supplies headers by default. Numeric classification comes from
 the first **data** row, so numeric columns, including their headers, align right;
