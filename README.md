@@ -1,7 +1,8 @@
 # tsv-to-ansi-table
 
-Render TSV from stdin as a terminal-width-aware table. Independent Roc and Zig
-0.16.0 implementations share the same CLI contract and Bash acceptance suite.
+Render TSV from stdin as a terminal-width-aware table. Independent Roc, Zig
+0.16.0 and Rust implementations share the same CLI contract and Bash acceptance
+suite. Zig and Rust also provide [native libraries and a common C ABI](docs/libraries.md).
 
 [![Mechatron Prime CI](https://img.shields.io/endpoint?url=https%3A%2F%2Fthelio-nixos.tail66c90.ts.net%2Fbadges%2Ftsv_to_ansi_table.json&style=for-the-badge)](https://thelio-nixos.tail66c90.ts.net/mechatron-prime/)
 
@@ -24,12 +25,13 @@ faster in the [recorded benchmark workloads](docs/benchmark-results.md).
 Rebuild after moving the checkout to a different platform or architecture.
 
 The platform-specific and Nix package `tsv-to-ansi-table` aliases select Roc;
-`tsv-to-ansi-table-roc` and `tsv-to-ansi-table-zig` select implementations
+`tsv-to-ansi-table-roc`, `tsv-to-ansi-table-zig` and `tsv-to-ansi-table-rust` select implementations
 explicitly. `./run` builds first and forwards arguments to Roc.
 `./build --debug` publishes debug binaries that
 announce themselves on stderr. `./build --test` runs the complete suite first.
 
-A Nix package also installs all three commands:
+A native Nix package installs all four command names, both static libraries and
+the common C header:
 
 ```bash
 nix build
@@ -54,7 +56,7 @@ common and long ones exercise clipping. Headings come from the same vocabulary.
 
 The table goes to stdout; `seed=0x…` goes to stderr. With no `--seed`, the command
 chooses a seed from OS randomness. Replay that seed as an unsigned decimal or
-hexadecimal integer smaller than 2^256. Both implementations produce identical
+hexadecimal integer smaller than 2^256. All implementations produce identical
 tables for the same seed, options, and terminal/locale settings. For byte-for-byte
 fixtures, explicitly set `--terminal-width`, `--decimal-separator`, and color or
 plain mode, and keep the glyph environment unchanged. Replay is tied to this
@@ -177,7 +179,7 @@ uses the native locale API. Decimal precision is metadata, not a rounding rule.
 ## Text safety and display limits
 
 Set `TSV_TO_ANSI_TABLE_GLYPHS` to a JSON object to override individual borders
-and the overflow ellipsis in either implementation:
+and the overflow ellipsis in every implementation:
 
 ```bash
 export TSV_TO_ANSI_TABLE_GLYPHS='{"top_left":"╭","top_right":"╮","bottom_left":"╰","bottom_right":"╯","ellipsis":"~"}'
@@ -194,7 +196,7 @@ JSON, controls, empty strings, and wide glyphs fail with a diagnostic.
 omits borders but uses the configured ellipsis. Text-safety markers remain part
 of the sanitization policy.
 
-Both implementations use Unicode 17 data. Clipping preserves grapheme clusters;
+All implementations use Unicode 17 data. Clipping preserves grapheme clusters;
 wide characters and emoji occupy two cells, ambiguous-width characters one.
 Combining-only clusters receive a visible dotted circle. Terminal control and
 format characters become `�`, except joiners and emoji tags needed within
@@ -209,14 +211,15 @@ width policy, not a claim to reproduce every terminal's glyph layout.
 ./bm
 ```
 
-`./test` includes Roc expectations, safety-enabled Zig allocator tests, shared
+`./test` includes Roc expectations, safety-enabled Zig allocator tests, native
+Rust API tests, real C and Zig library consumers, and shared
 CLI error/header/Unicode tests, a producer handshake proving fixed-width output
 before EOF, 216 input-table and 18 seeded-example cross-implementation cases,
 seed replay and validation, example generation without stdin, debug announcements,
 and a benchmark oracle that rejects missing, reordered, rounded, or extra rows.
 Expected stderr is captured. Native runtime verification is on Linux x86_64.
 
-`./bm` builds optimized executables and compares identical 10,000-row workloads
+`./bm` compares the Roc and Zig CLIs using optimized builds and identical 10,000-row workloads
 with auto and fixed widths, under one-core and twelve-core CPU affinity. Each
 case warms up twice and records five fresh-process wall-clock and child-CPU
 samples. Both tools are single-threaded; twelve-core affinity measures the same
@@ -236,19 +239,22 @@ visibly.
 ## Toolchains and target coverage
 
 Nix pins Roc nightly `2026-10-12-2664a27`, basic-cli `0.25.0`, Roc Unicode `4.2.0`,
-Zig `0.16.0`, and utf8proc `2.11.3`. The Roc compiler is a prebuilt upstream
-release; its matching Darwin linker stub is pinned separately. A small C adapter
-provides terminal width/TTY detection and Windows locale lookup to both programs.
+Zig `0.16.0`, Rust `1.97.1`, and utf8proc `2.11.3` for Zig. Rust's pinned
+`utf8proc-sys` bundles utf8proc `2.11.0`; both use Unicode 17 data. The Roc compiler
+is a prebuilt upstream release; its matching Darwin linker stub is pinned
+separately. Zig and Rust use a shared C CLI through the public C ABI. A small C
+adapter provides terminal width/TTY detection and Windows locale lookup.
 
 Native Nix builds are exposed for Linux x86_64, Linux ARM64, and macOS ARM64.
-Cross packages are `linux-arm64`, `macos-arm64`, `windows-x86_64`, and
+Rust is included in native packages; Rust cross packaging is still queued in
+`PLAN.md`. Cross packages are `linux-arm64`, `macos-arm64`, `windows-x86_64`, and
 `windows-arm64`; for example `nix build .#windows-x86_64`. Both Windows packages
 contain only Zig: the pinned Roc platform has no ARM64 Windows host, and its
 x86_64 host lacks CRT import libraries needed to link successfully. Cross builds
 verify compilation and linking, not runtime behavior on those operating systems.
 Linux executables use musl and are static. macOS Intel is outside the target set.
 
-The pure cores are in `src/` and `zig/`; stdin, stdout, environment, and terminal
+The pure cores are in `src/`, `zig/` and `rust/src/`; stdin, stdout, environment, and terminal
 adapters remain at the boundary. See [INTENT.md](INTENT.md) and
 [the CLI contract](docs/cli-contract.md) for scope and edge-case decisions.
 

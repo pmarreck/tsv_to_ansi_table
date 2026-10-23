@@ -56,3 +56,12 @@ Provide a Zig 0.16.0 implementation after establishing the Bash stdin/output
 acceptance suite for the Roc implementation. Both implementations must satisfy
 the same accepted CLI contract and shared suite. Keep the Roc implementation
 and its pure core as an independently usable implementation.
+
+Expose the Zig core as a public module and length-delimited C ABI library, with
+a C CLI that exercises that ABI for every table operation. Provide an independent
+Rust implementation as a Rust library and compatible C ABI library, using the
+same C frontend and complete CLI acceptance suite. Library callers supply rows,
+terminal width and configuration; rendering performs no I/O or environment
+queries. Define ownership, errors, Unicode policy and streaming behavior, and
+verify real Zig, Rust and C consumers. Preserve the Roc CLI as an independent
+implementation. Build-architecture conformance remains separately tracked.

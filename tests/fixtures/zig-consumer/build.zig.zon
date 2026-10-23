@@ -1,0 +1,7 @@
+.{
+	.name = .table_consumer,
+	.version = "0.0.0",
+	.fingerprint = 0xe0e619f7d8c642fb,
+	.dependencies = .{ .tsv_to_ansi_table = .{ .path = "../../.." } },
+	.paths = .{ "build.zig", "build.zig.zon", "main.zig" },
+}

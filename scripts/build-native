@@ -17,6 +17,11 @@ fi
 scripts/roc-env build "$roc_source" --opt="$roc_opt" --target="$tsv_roc_target" --output="$out/bin/tsv-to-ansi-table-roc" || exit $?
 unset NIX_CFLAGS_COMPILE NIX_LDFLAGS
 scripts/zig-env build -Dutf8proc="$UTF8PROC_SRC" -Doptimize="$profile" -Dtarget="$tsv_target" --prefix "$out" -j4 || exit $?
+rust_product=${RUST_PRODUCT:?use nix develop}
+[[ $profile != Debug ]] || rust_product=${RUST_DEBUG_PRODUCT:?use nix develop}
+cp "$rust_product/bin/tsv-to-ansi-table-rust" "$out/bin/" || exit 1
+mkdir -p "$out/lib/rust" || exit 1
+cp "$rust_product/lib/libtsv_to_ansi_table.a" "$out/lib/rust/" || exit 1
 ln -s tsv-to-ansi-table-roc "$out/bin/tsv-to-ansi-table" || exit 1
 mkdir -p "$out/share/licenses/random" || exit 1
 cp "$RANDOM_SRC/LICENSE" "$out/share/licenses/random/LICENSE" || exit 1

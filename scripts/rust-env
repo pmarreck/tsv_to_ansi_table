@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -u
+cd "$(dirname "$0")/.." || exit 1
+deps=${RUST_CARGO_DEPS:?use nix develop}
+exec cargo --config "$deps/.cargo/config.toml" \
+	--config "source.vendored-sources.directory=\"$deps\"" \
+	"$@" --manifest-path rust/Cargo.toml --locked --offline

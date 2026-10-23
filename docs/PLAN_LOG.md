@@ -20,3 +20,9 @@ Completed PLAN.md items retired by plan-retire, oldest retirement first.
 ## Retired 2026-10-23
 
 - [x] [Completed] Add validated environment glyph overrides to both implementations, pass all tests/target builds and verify published exact-commit CI (done 2026-10-15 17:35 EDT; commit 04ce607).
+- [x] [Completed] Keep header separators in the normal border color in both renderers; observe regression failures before the fix and pass Unicode, ASCII, custom-glyph and unstyled checks (done 2026-10-21 15:18 EDT).
+- [x] [Completed] Verify the published example subcommand update in exact-commit CI (done 2026-10-20 11:17 EDT; commit 13f4c1a).
+- [x] [Completed] Add seeded examples using the random libraries and shared vocabulary; pass the complete suite, native/debug builds, and all configured cross-target builds (done 2026-10-20 11:16 EDT; commit 13f4c1a).
+- [x] [Completed] Document example usage, seed replay, and dependency pinning; annotate all new files (done 2026-10-20 11:16 EDT; commit 13f4c1a).
+- [x] [Completed] Fill purpose notes for all tracked files and key directories, preserve depth=3, and verify no orphaned notes (done 2026-10-20 10:55 EDT).
+- [x] [Completed] Repeat ./bm on the glyph update and record verified UNBASELINED observations (done 2026-10-15 17:35 EDT; measured commit 04ce607).

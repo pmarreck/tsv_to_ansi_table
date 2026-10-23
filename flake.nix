@@ -68,7 +68,11 @@
 			unicode = unpack "roc-unicode-4.2.0"
 				"https://github.com/roc-lang/unicode/releases/download/4.2.0/4W8SHzvwet9hH9qZewJ1J1CVQoH7YKA6zyijWFTB3y1w.tar.zst"
 				"sha256-39BST7hDY9GP1cd6y2j6HresGFvXgducKx7agTyuOik=";
-		in { inherit pkgs roc platform http unicode; };
+			rustDeps = pkgs.rustPlatform.importCargoLock {
+				lockFile = ./rust/Cargo.lock;
+				outputHashes."randomr-0.4.0" = "sha256-ixFWmP1Raenwc93I4FKx8u9mN5SDGBXzHbTB36M7vEI=";
+			};
+		in { inherit pkgs roc platform http unicode rustDeps; };
 	in {
 		packages = forAll (system: let
 			t = toolsFor system;
@@ -77,10 +81,13 @@
 				version = "0.1.0";
 				src = t.pkgs.lib.fileset.toSource {
 					root = ./.;
-					fileset = t.pkgs.lib.fileset.unions [ ./src ./zig ./platform ./tests ./scripts ./main.zig ./build.zig ./build.zig.zon ./test ];
+					fileset = t.pkgs.lib.fileset.unions [ ./src ./zig ./rust ./platform ./tests ./scripts ./cli ./include ./lib.zig ./ffi.zig ./build.zig ./build.zig.zon ./test ];
 				};
 				strictDeps = true;
-				nativeBuildInputs = [ t.roc t.pkgs.file t.pkgs.flock t.pkgs.zig_0_16 (t.pkgs.luajit.withPackages (lua: [ lua.cjson ])) t.pkgs.jq ];
+				nativeBuildInputs = [ t.roc t.pkgs.file t.pkgs.flock t.pkgs.zig_0_16 t.pkgs.cargo t.pkgs.rustc t.pkgs.stdenv.cc (t.pkgs.luajit.withPackages (lua: [ lua.cjson ])) t.pkgs.jq ];
+				RUST_CARGO_DEPS = t.rustDeps;
+				RUST_PRODUCT = self.packages.${system}.rust;
+				RUST_DEBUG_PRODUCT = self.packages.${system}.rust-debug;
 				ROC_PLATFORM = t.platform;
 				ROC_HTTP = t.http;
 				ROC_UNICODE = t.unicode;
@@ -101,6 +108,8 @@
 			};
 			cross = target: rocTarget: package.overrideAttrs {
 				pname = "tsv-to-ansi-table-${target}";
+				RUST_PRODUCT = null;
+				RUST_DEBUG_PRODUCT = null;
 				buildPhase = ''
 					export HOME="$TMPDIR/home" XDG_CACHE_HOME="$TMPDIR/cache"
 					export ZIG_GLOBAL_CACHE_DIR="$TMPDIR/zig-global" ZIG_LOCAL_CACHE_DIR="$TMPDIR/zig-local"
@@ -120,6 +129,8 @@
 			};
 		in {
 			default = package;
+			rust = import ./nix/rust.nix { pkgs = t.pkgs; };
+			rust-debug = import ./nix/rust.nix { pkgs = t.pkgs; profile = "debug"; };
 			linux-arm64 = cross "aarch64-linux-musl" "arm64musl";
 			macos-arm64 = cross "aarch64-macos" "arm64mac";
 			# The pinned Roc Windows host omits required CRT import libraries.
@@ -128,13 +139,16 @@
 			debug = package.overrideAttrs {
 				pname = "tsv-to-ansi-table-debug";
 				TSV_PROFILE = "Debug";
-				checkPhase = ''bash tests/cli/debug "$out/bin/tsv-to-ansi-table-roc" "$out/bin/tsv-to-ansi-table-zig"'';
+				checkPhase = ''bash tests/cli/debug "$out/bin/tsv-to-ansi-table-roc" "$out/bin/tsv-to-ansi-table-zig" "$out/bin/tsv-to-ansi-table-rust"'';
 			};
 		});
 		checks = forAll (system: { package = self.packages.${system}.default; });
 		devShells = forAll (system: let t = toolsFor system; in {
 			default = t.pkgs.mkShell {
-				packages = [ t.roc (t.pkgs.luajit.withPackages (lua: [ lua.cjson ])) t.pkgs.jq t.pkgs.file t.pkgs.zig_0_16 t.pkgs.flock performance-profiling.packages.${system}.default ];
+				packages = [ t.roc (t.pkgs.luajit.withPackages (lua: [ lua.cjson ])) t.pkgs.jq t.pkgs.file t.pkgs.zig_0_16 t.pkgs.flock t.pkgs.cargo t.pkgs.rustc performance-profiling.packages.${system}.default ];
+				RUST_CARGO_DEPS = t.rustDeps;
+				RUST_PRODUCT = self.packages.${system}.rust;
+				RUST_DEBUG_PRODUCT = self.packages.${system}.rust-debug;
 				TSV_ROC_ENV = "1";
 				ROC_PLATFORM = t.platform;
 				ROC_HTTP = t.http;

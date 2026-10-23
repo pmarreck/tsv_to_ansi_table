@@ -4,10 +4,14 @@
 	.version = "0.1.0",
 	.minimum_zig_version = "0.16.0",
 	.dependencies = .{
+		.utf8proc = .{
+			.url = "https://github.com/JuliaStrings/utf8proc/archive/refs/tags/v2.11.3.tar.gz",
+			.hash = "N-V-__8AACywKABFCj0r_Y-jIWsk9ahy10zlk78hjn6S-39g",
+		},
 		.random = .{
 			.url = "https://github.com/pmarreck/random/archive/76ada4a2d6259569f901985b08d8d5ad10f45059.tar.gz",
 			.hash = "random-0.4.0-dyRyrJ6FCQA374i2644KvuGmR-iz0ob8pUigAxNVL0WD",
 		},
 	},
-	.paths = .{ "build.zig", "build.zig.zon", "main.zig", "zig", "src", "platform", "LICENSE" },
+	.paths = .{ "build.zig", "build.zig.zon", "lib.zig", "ffi.zig", "zig", "src", "platform", "cli", "include", "tests", "LICENSE" },
 }

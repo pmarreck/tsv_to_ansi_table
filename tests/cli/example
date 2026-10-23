@@ -41,6 +41,10 @@ capture "$cli" example --help
 assert test "$rc" = 0
 assert test -z "$err"
 assert test "${out/example/}" != "$out"
+# A layout error still reports the chosen seed, preserving replay diagnostics.
+capture "$cli" example --seed 42 --terminal-width 1
+assert test "$rc" != 0
+assert test "${err%%$'\n'*}" = 'seed=0x000000000000000000000000000000000000000000000000000000000000002a'
 # Example ignores stdin, even while its producer has not sent EOF.
 # The timeout is a deadlock watchdog, not a timing assertion.
 coproc DEMO { exec "$cli" example --seed 42 --plain --terminal-width 80 2>/dev/null; }

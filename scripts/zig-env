@@ -2,4 +2,5 @@
 set -u
 # Seed the package cache from the pinned Nix source, without network access.
 zig fetch "${RANDOM_SRC:?use nix develop}" >/dev/null || exit $?
+zig fetch "${UTF8PROC_SRC:?use nix develop}" >/dev/null || exit $?
 exec zig "$@"

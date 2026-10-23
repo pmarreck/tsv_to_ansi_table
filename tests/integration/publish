@@ -19,6 +19,7 @@ for attempt in first repeated; do
 	[[ -L $entry && -x $entry ]] || fail "$attempt publication lacks executable PATH link"
 	[[ $(readlink "$entry") == "$tsv_os/$tsv_arch/tsv-to-ansi-table-zig" ]] || fail "$attempt publication selected wrong host or implementation"
 	[[ $(readlink -f "$entry") == "$product/bin/tsv-to-ansi-table-zig" ]] || fail "$attempt publication resolves to wrong product"
+	[[ $(readlink -f "$native/tsv-to-ansi-table-rust") == "$product/bin/tsv-to-ansi-table-rust" ]] || fail "$attempt publication lacks the Rust command"
 	capture env PATH="$PWD/bin:$PATH" bash -c 'tsv-to-ansi-table --about'
 	[[ $rc == 0 && -z $err && $out == *'(Zig;'* ]] || fail "$attempt PATH invocation did not run Zig"
 done

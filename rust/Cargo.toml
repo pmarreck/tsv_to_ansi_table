@@ -1,0 +1,20 @@
+[package]
+name = "tsv-to-ansi-table"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+license = "MIT"
+description = "Pure Unicode terminal table rendering with a C ABI"
+
+[lib]
+name = "tsv_to_ansi_table"
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+utf8proc-sys = "=0.1.2"
+serde_json = "1"
+randomr = { git = "https://github.com/pmarreck/random", rev = "76ada4a2d6259569f901985b08d8d5ad10f45059", default-features = false, features = ["std"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"

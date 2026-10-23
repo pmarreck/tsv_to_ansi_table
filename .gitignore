@@ -9,3 +9,5 @@
 /bin/macos/
 /bin/windows/
 /bin/tsv-to-ansi-table
+/rust/target/
+/tests/fixtures/zig-consumer/zig-pkg/
