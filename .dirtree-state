@@ -83,6 +83,7 @@ annotate=[
 	tests/cli/check = Exact-output header and alignment fixtures plus help and about checks
 	tests/cli/color = Assert header color stops before Unicode, ASCII, and custom separators
 	tests/cli/debug = Assert the yellow debug-build announcement on stderr
+	tests/cli/equals = Shared space/equals option equivalence, literal values and rejection tests
 	tests/cli/errors = Reject invalid options, malformed rows, narrow layouts, and invalid UTF-8
 	tests/cli/example = Seed replay, validation, generated data shape, headers, and stdin independence
 	tests/cli/glyphs = Shared environment glyph overrides and rejection classifier tests

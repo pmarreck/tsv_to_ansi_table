@@ -54,8 +54,10 @@ impl Config {
 				"--ascii" => config.ascii = true,
 				"--plain" => { config.plain = true; config.color = Color::Never; }
 				_ => {
-					i += 1;
-					let value = *args.get(i).ok_or(Error::InvalidOptions)?;
+					let (arg, value) = if let Some(pair) = arg.split_once('=') { pair } else {
+						i += 1;
+						(arg, *args.get(i).ok_or(Error::InvalidOptions)?)
+					};
 					match arg {
 						"--seed" => {
 							if !config.example || config.seed.is_some() { return Err(Error::InvalidOptions); }

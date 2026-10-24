@@ -1,5 +1,11 @@
 # CLI choices
 
+Every value-taking option accepts `--option value` or `--option=value`.
+Split only the first equals sign; the remainder is the literal value, including
+additional equals signs or an empty header. Empty numeric/enumerated values
+remain errors. Switches such as `--plain` and `--help` do not accept values.
+Both forms may be mixed, with the same ordering and repeat-option rules.
+
 The command reads TSV on stdin. `--headers 'Name,Count'` replaces the first
 input row by default; with `--no-header` it prepends those names and preserves
 all input rows. Names containing commas can instead be supplied by repeating

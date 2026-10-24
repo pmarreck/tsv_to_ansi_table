@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -u
+cli=${1:?pass exact executable}
+source "$(dirname "$0")/../capture.bash"
+failures=0
+input=$'Name\tCount\nalpha\t12\nbeta\t3\n'
+feed() { printf '%s' "$input" | "$cli" "$@"; }
+equivalent() {
+	local option=$1 value=$2
+	shift 2
+	local out err rc expected_out expected_err expected_rc
+	capture feed "$@" "$option" "$value"
+	expected_out=$out expected_err=$err expected_rc=$rc
+	if [[ $expected_rc != 0 ]]; then
+		printf 'FAIL space-separated reference %s (exit %s; stderr %q)\n' "$option" "$expected_rc" "$expected_err"
+		failures=$((failures + 1))
+		return
+	fi
+	capture feed "$@" "$option=$value"
+	if [[ $rc != "$expected_rc" || $out != "$expected_out" || $err != "$expected_err" ]]; then
+		printf 'FAIL equals form %s=%q (exit %s; stderr %q)\n' "$option" "$value" "$rc" "$err"
+		failures=$((failures + 1))
+	fi
+}
+# Every value-taking option must behave identically in both forms.
+equivalent --seed 42 example --color never --terminal-width 80
+equivalent --headers 'Name,Count' --plain
+equivalent --header 'Name' --header Count --plain
+equivalent --widths '8,6' --color never
+equivalent --align 'right,center' --plain
+equivalent --overflow 'prefix-ellipsis,truncate-left' --widths 3,2 --plain
+equivalent --terminal-width 40 --color never
+equivalent --color always
+equivalent --decimal-separator ',' --plain
+# Split only the first equals sign; option-looking values remain literal data.
+equivalent --header 'a=b=c' --header Count --plain
+equivalent --headers 'a=b,c=d' --plain
+equivalent --header '--color=always' --header Count --plain
+equivalent --header '' --header Count --plain
+input=$'Name\nalpha\n'
+equivalent --headers '' --plain
+input=$'Name\tCount\nalpha\t12\nbeta\t3\n'
+out='' err='' rc=''
+capture feed --plain --headers=Label,N --widths 6,3 --align=left,right
+if [[ $rc != 0 || -n $err || $out != $'Label     N\nalpha    12\nbeta      3' ]]; then
+	printf 'FAIL mixed separated and equals options (exit %s; stdout %q; stderr %q)\n' "$rc" "$out" "$err"
+	failures=$((failures + 1))
+fi
+# Empty numeric/enumerated values stay invalid; following args cannot fill them.
+for option in --seed --widths --align --overflow --terminal-width --color --decimal-separator; do
+	capture feed example "$option=" --help
+	if [[ $rc == 0 || -z $err ]]; then
+		printf 'FAIL accepted empty %s value\n' "$option"
+		failures=$((failures + 1))
+	fi
+done
+# Switches and the subcommand do not take values. Unknown names remain errors.
+for arg in --help=yes -h=yes /h=yes '/?=yes' --about=yes --plain=yes --ascii=yes --no-header=yes example=42 --unknown=value; do
+	capture feed "$arg"
+	if [[ $rc == 0 || -z $err ]]; then
+		printf 'FAIL accepted invalid option %s\n' "$arg"
+		failures=$((failures + 1))
+	fi
+done
+capture feed example --seed=42 --seed 88
+if [[ $rc == 0 || -z $err ]]; then
+	printf 'FAIL accepted duplicate seed in mixed forms\n'
+	failures=$((failures + 1))
+fi
+if [[ $failures == 0 ]]; then printf 'PASS space/equals option equivalence and invalid-value sets\n'; fi
+exit "$failures"

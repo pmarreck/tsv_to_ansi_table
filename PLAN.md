@@ -1,5 +1,11 @@
 # PLAN
 
+## Library consumer portability
+
+- [ ] Make the Rust crate self-contained for Git dependency vendoring, with help/vocabulary assets inside rust/ and a shared-asset drift test; verify a source-bounded Nix consumer build and send the consumer a published revision.
+- [ ] Verify the Rust library with the consumer's Rust 1.91.1 toolchain and declare the tested minimum version, or identify the specific newer feature that prevents it.
+- [ ] Qualify consumer library builds for macOS amd64 and Windows ARM64 alongside the default five-platform matrix; keep this consumer compatibility requirement distinct from supported CLI packaging.
+
 ## Build architecture conformance
 
 - [ ] Conform to the 2026-10-23 cross-platform-project-build-arch skill and its canonical-implementations and verification-and-migration references; inventory current products, callers and supported combinations, and reconcile the earlier generic bin/ executable requirement before changing publication.
@@ -9,6 +15,7 @@
 - [ ] Migrate project-owned output namespaces to PF (linux-amd64, linux-arm64, macos-arm64, mswin-amd64, mswin-arm64), separate applicable gnu/musl variants and profiles, and retain explicit compiler/Nix target translations and store GC roots.
 - [ ] Publish only canonical public commands under bin/<PF>/, align ./run with that selection, retain other implementations in namespaced product trees, and preserve prior working products, Windows runtime resources and recoverable migration paths.
 - [ ] Prove conformance through ./test with selection validation, scope-set equivalence, platform-alias classification, ABI/profile coexistence, concurrent and failed publication, PATH isolation and real host builds; update intent, docs, Nix packaging and CI while distinguishing cross-compilation from native runtime verification.
+- [ ] Separate preparation and execution timing while moving test preparation fully onto the Nix build path; the option-syntax run took roughly four minutes, including a 93-second main build phase and a 56-second mixed compilation/check phase, so execution-budget compliance is unverified.
 
 ## Completed library implementation
 
@@ -22,7 +29,7 @@
 
 ## Completed
 
+- [x] Observe 15 new shared CLI failures per implementation, then support space or equals separators for every value-taking option in Roc, Zig and Rust; pass the complete Nix suite and ./build, including empty/literal values, mixed forms and invalid switches (done 2026-10-24 10:46 EDT).
+- [x] Confirm connected Unicode borders are already the default; the owner identified the apparent gaps in README rendering, so no glyph change is needed (done 2026-10-24 10:38 EDT).
+- [x] Verify published library commit b5806cc passed exact-commit Mechatron Prime CI on 2026-10-23 at 17:43 EDT (verified 2026-10-24 10:38 EDT).
 - [x] Verify exact-commit CI for the published header, README and current-host PATH update: fa2804c passed on 2026-10-21 at 16:50 EDT (verified 2026-10-23 14:02 EDT).
-- [x] Pass ./test, ./build, debug and all configured cross-target builds; verify the installed PATH command selects the current-host Zig binary and push commit 496c51a (done 2026-10-21 16:01 EDT).
-- [x] Add actual seed 42 and 88 tables to the README and verify both fixtures against both rebuilt implementations (done 2026-10-21 15:18 EDT).
-- [x] Publish bin/tsv-to-ansi-table as a current-host Zig link; observe failures before implementation and pass PATH selection, retry, stale-link and file-preservation tests (done 2026-10-21 15:18 EDT).

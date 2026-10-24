@@ -3,6 +3,8 @@ tsv-to-ansi-table: render UTF-8 TSV from stdin
 Usage: tsv-to-ansi-table [OPTIONS] < input.tsv
        tsv-to-ansi-table example [--seed SEED] [OPTIONS]
 
+Value-taking options accept a space or '=': --seed 42 and --seed=42.
+
   example                    Generate 12 rows with 4-6 mixed text/numeric columns
   --seed SEED                Replay an example (unsigned decimal or 0x hex, <2^256)
                              Without a seed, choose one from OS randomness.

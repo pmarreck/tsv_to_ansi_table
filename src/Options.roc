@@ -10,19 +10,26 @@ Options :: [].{
 		var $c = initial
 		var $i = 0
 		while $i < args.len() {
-			arg = args.get($i) ?? ""
+			raw = args.get($i) ?? ""
+			assignment = raw.split_on("=")
+			attached = assignment.len() > 1
+			arg = assignment.first() ?? ""
 			match arg {
-				"example" if $i == 0 => { $c = { ..$c, example: True } }
-				"-h" | "--help" | "/h" | "/?" => { $c = { ..$c, help: True } }
-				"--about" => { $c = { ..$c, about: True } }
-				"--no-header" => { $c = { ..$c, no_header: True } }
-				"--ascii" => { $c = { ..$c, ascii: True } }
-				"--plain" => { $c = { ..$c, plain: True, color: "never" } }
+				"example" if $i == 0 and !attached => { $c = { ..$c, example: True } }
+				"-h" | "--help" | "/h" | "/?" if !attached => { $c = { ..$c, help: True } }
+				"--about" if !attached => { $c = { ..$c, about: True } }
+				"--no-header" if !attached => { $c = { ..$c, no_header: True } }
+				"--ascii" if !attached => { $c = { ..$c, ascii: True } }
+				"--plain" if !attached => { $c = { ..$c, plain: True, color: "never" } }
 				"--seed" | "--headers" | "--header" | "--widths" | "--align" | "--overflow" | "--terminal-width" | "--color" | "--decimal-separator" => {
-					$i = $i + 1
-					value = match args.get($i) {
-						Ok(v) => v
-						Err(_) => return Err(Invalid("Missing value for ${arg}"))
+					value = if attached {
+						Str.join_with(assignment.drop_first(1), "=")
+					} else {
+						$i = $i + 1
+						match args.get($i) {
+							Ok(v) => v
+							Err(_) => return Err(Invalid("Missing value for ${arg}"))
+						}
 					}
 					parts = value.split_on(",")
 					match arg {

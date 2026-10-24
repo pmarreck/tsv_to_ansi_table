@@ -22,17 +22,21 @@ pub fn parse(a: A, args: []const []const u8, initial: Config) !Config {
 	var config = initial;
 	var i: usize = 0;
 	while (i < args.len) : (i += 1) {
-		const arg = args[i];
-		if (!std.unicode.utf8ValidateSlice(arg)) return error.InvalidOptions;
-		if (i == 0 and eq(arg, "example")) { config.example = true; continue; }
-		if (eq(arg, "--help") or eq(arg, "-h") or eq(arg, "/h") or eq(arg, "/?")) { config.help = true; continue; }
-		if (eq(arg, "--about")) { config.about = true; continue; }
-		if (eq(arg, "--no-header")) { config.no_header = true; continue; }
-		if (eq(arg, "--ascii")) { config.ascii = true; continue; }
-		if (eq(arg, "--plain")) { config.plain = true; config.color = .never; continue; }
-		i += 1;
-		if (i == args.len) return error.InvalidOptions;
-		const value = args[i];
+		const raw = args[i];
+		if (!std.unicode.utf8ValidateSlice(raw)) return error.InvalidOptions;
+		if (i == 0 and eq(raw, "example")) { config.example = true; continue; }
+		if (eq(raw, "--help") or eq(raw, "-h") or eq(raw, "/h") or eq(raw, "/?")) { config.help = true; continue; }
+		if (eq(raw, "--about")) { config.about = true; continue; }
+		if (eq(raw, "--no-header")) { config.no_header = true; continue; }
+		if (eq(raw, "--ascii")) { config.ascii = true; continue; }
+		if (eq(raw, "--plain")) { config.plain = true; config.color = .never; continue; }
+		const separator = std.mem.indexOfScalar(u8, raw, '=');
+		const arg = if (separator) |index| raw[0..index] else raw;
+		const value = if (separator) |index| raw[index + 1 ..] else value: {
+			i += 1;
+			if (i == args.len) return error.InvalidOptions;
+			break :value args[i];
+		};
 		if (!std.unicode.utf8ValidateSlice(value)) return error.InvalidOptions;
 		var parts = std.mem.splitScalar(u8, value, ',');
 		if (eq(arg, "--seed")) {

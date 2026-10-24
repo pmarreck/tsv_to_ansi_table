@@ -28,7 +28,7 @@ else
 	products="$work/bin"
 fi
 for implementation in roc zig rust; do
-	for suite in tests/cli/check tests/cli/errors tests/cli/streaming tests/cli/semantics tests/cli/glyphs tests/cli/color tests/cli/example; do
+	for suite in tests/cli/check tests/cli/errors tests/cli/equals tests/cli/streaming tests/cli/semantics tests/cli/glyphs tests/cli/color tests/cli/example; do
 		bash "$suite" "$products/tsv-to-ansi-table-$implementation" || failures=$((failures + 1))
 	done
 done

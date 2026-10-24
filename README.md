@@ -145,7 +145,9 @@ producer | ./run --widths auto,10 --overflow prefix-ellipsis,truncate
 ```
 
 Column options are comma-separated positional lists; omitted entries use the
-default. Widths count content cells. With any automatic width, the command reads
+default. Every value-taking option accepts a space or `=`, such as `--seed=42`,
+`--widths=20,10`, or `--header='Count = total'`. Both forms can be mixed.
+Widths count content cells. With any automatic width, the command reads
 to EOF, then shares available space fairly among auto columns. With every width
 fixed, it emits rows incrementally and retains only the header, inferred layout,
 and current row. Fixed widths never shrink. An impossibly narrow table is an
